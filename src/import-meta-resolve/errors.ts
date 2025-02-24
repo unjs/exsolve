@@ -1,0 +1,452 @@
+// Source:  https://github.com/nodejs/node/blob/main/lib/internal/errors.js
+// Changes: https://github.com/nodejs/node/commits/main/lib/internal/errors.js?since=2024-04-29
+
+import v8 from "node:v8";
+import assert from "node:assert";
+import { format, inspect } from "node:util";
+
+export type ErrnoExceptionFields = {
+  errnode?: number;
+  code?: string;
+  path?: string;
+  syscall?: string;
+  url?: string;
+};
+
+export type ErrnoException = Error & ErrnoExceptionFields;
+export type MessageFunction = (...parameters: Array<any>) => string;
+
+const own = {}.hasOwnProperty;
+
+const classRegExp = /^([A-Z][a-z\d]*)+$/;
+
+// Sorted by a rough estimate on most frequently used entries.
+const kTypes = new Set([
+  "string",
+  "function",
+  "number",
+  "object",
+  // Accept 'Function' and 'Object' as alternative to the lower cased version.
+  "Function",
+  "Object",
+  "boolean",
+  "bigint",
+  "symbol",
+]);
+
+const messages: Map<string, MessageFunction | string> = new Map();
+
+const nodeInternalPrefix = "__node_internal_";
+
+let userStackTraceLimit: number;
+
+/**
+ * Create a list string in the form like 'A and B' or 'A, B, ..., and Z'.
+ * We cannot use Intl.ListFormat because it's not available in
+ * --without-intl builds.
+ *
+ * @param {Array<string>} array
+ *   An array of strings.
+ * @param {string} [type]
+ *   The list type to be inserted before the last element.
+ * @returns {string}
+ */
+function formatList(array: string[], type = "and"): string {
+  return array.length < 3
+    ? array.join(` ${type} `)
+    : `${array.slice(0, -1).join(", ")}, ${type} ${array.at(-1)}`;
+}
+
+/**
+ * Utility function for registering the error codes.
+ */
+function createError<
+  T extends MessageFunction | string,
+  C extends ErrorConstructor,
+>(
+  sym: string,
+  value: T,
+  constructor: C,
+): T extends string
+  ? C
+  : { new (...args: Parameters<Exclude<T, string>>): InstanceType<C> } {
+  // Special case for SystemError that formats the error message differently
+  // The SystemErrors only have SystemError as their base classes.
+  messages.set(sym, value);
+
+  return makeNodeErrorWithCode(constructor, sym) as any;
+}
+
+function makeNodeErrorWithCode(
+  Base: ErrorConstructor,
+  key: string,
+): ErrorConstructor {
+  // @ts-expect-error It’s a Node error.
+  return function NodeError(...parameters: unknown[]) {
+    const limit = Error.stackTraceLimit;
+    if (isErrorStackTraceLimitWritable()) Error.stackTraceLimit = 0;
+    const error = new Base();
+    // Reset the limit and setting the name property.
+    if (isErrorStackTraceLimitWritable()) Error.stackTraceLimit = limit;
+    const message = getMessage(key, parameters, error);
+    Object.defineProperties(error, {
+      // Note: no need to implement `kIsNodeError` symbol, would be hard,
+      // probably.
+      message: {
+        value: message,
+        enumerable: false,
+        writable: true,
+        configurable: true,
+      },
+      toString: {
+        /** @this {Error} */
+        value() {
+          return `${this.name} [${key}]: ${this.message}`;
+        },
+        enumerable: false,
+        writable: true,
+        configurable: true,
+      },
+    });
+
+    captureLargerStackTrace(error);
+    // @ts-expect-error It’s a Node error.
+    error.code = key;
+    return error;
+  };
+}
+
+function isErrorStackTraceLimitWritable(): boolean {
+  // Do no touch Error.stackTraceLimit as V8 would attempt to install
+  // it again during deserialization.
+  try {
+    if (v8.startupSnapshot.isBuildingSnapshot()) {
+      return false;
+    }
+  } catch {
+    // ignore
+  }
+
+  const desc = Object.getOwnPropertyDescriptor(Error, "stackTraceLimit");
+  if (desc === undefined) {
+    return Object.isExtensible(Error);
+  }
+
+  return own.call(desc, "writable") && desc.writable !== undefined
+    ? desc.writable
+    : desc.set !== undefined;
+}
+
+/**
+ * This function removes unnecessary frames from Node.js core errors.
+ */
+function hideStackFrames<T extends (...parameters: unknown[]) => unknown>(
+  wrappedFunction: T,
+): T {
+  // We rename the functions that will be hidden to cut off the stacktrace
+  // at the outermost one
+  const hidden = nodeInternalPrefix + wrappedFunction.name;
+  Object.defineProperty(wrappedFunction, "name", { value: hidden });
+  return wrappedFunction;
+}
+
+const captureLargerStackTrace = hideStackFrames(function (error: unknown) {
+  const stackTraceLimitIsWritable = isErrorStackTraceLimitWritable();
+  if (stackTraceLimitIsWritable) {
+    userStackTraceLimit = Error.stackTraceLimit;
+    Error.stackTraceLimit = Number.POSITIVE_INFINITY;
+  }
+
+  Error.captureStackTrace(error as Error);
+
+  // Reset the limit
+  if (stackTraceLimitIsWritable) Error.stackTraceLimit = userStackTraceLimit;
+
+  return error;
+});
+
+function getMessage(key: string, parameters: unknown[], self: Error): string {
+  const message = messages.get(key);
+  assert(message !== undefined, "expected `message` to be found");
+
+  if (typeof message === "function") {
+    assert(
+      message.length <= parameters.length, // Default options do not count.
+      `Code: ${key}; The provided arguments length (${parameters.length}) does not ` +
+        `match the required ones (${message.length}).`,
+    );
+    return Reflect.apply(message, self, parameters);
+  }
+
+  const regex = /%[dfijoOs]/g;
+  let expectedLength = 0;
+  while (regex.exec(message) !== null) expectedLength++;
+  assert(
+    expectedLength === parameters.length,
+    `Code: ${key}; The provided arguments length (${parameters.length}) does not ` +
+      `match the required ones (${expectedLength}).`,
+  );
+  if (parameters.length === 0) return message;
+
+  parameters.unshift(message);
+
+  return Reflect.apply(format, null, parameters);
+}
+
+/**
+ * Determine the specific type of a value for type-mismatch errors.
+ */
+function determineSpecificType(value: unknown): string {
+  if (value === null || value === undefined) {
+    return String(value);
+  }
+
+  if (typeof value === "function" && value.name) {
+    return `function ${value.name}`;
+  }
+
+  if (typeof value === "object") {
+    if (value.constructor && value.constructor.name) {
+      return `an instance of ${value.constructor.name}`;
+    }
+
+    return `${inspect(value, { depth: -1 })}`;
+  }
+
+  let inspected = inspect(value, { colors: false });
+
+  if (inspected.length > 28) {
+    inspected = `${inspected.slice(0, 25)}...`;
+  }
+
+  return `type ${typeof value} (${inspected})`;
+}
+
+// ----------------------------------------------------------------------------
+// Codes
+// ----------------------------------------------------------------------------
+
+export const ERR_INVALID_ARG_TYPE = createError(
+  "ERR_INVALID_ARG_TYPE",
+  (name: string, expected: Array<string> | string, actual: unknown) => {
+    assert(typeof name === "string", "'name' must be a string");
+    if (!Array.isArray(expected)) {
+      expected = [expected];
+    }
+
+    let message = "The ";
+    if (name.endsWith(" argument")) {
+      // For cases like 'first argument'
+      message += `${name} `;
+    } else {
+      const type = name.includes(".") ? "property" : "argument";
+      message += `"${name}" ${type} `;
+    }
+
+    message += "must be ";
+
+    const types: string[] = [];
+    const instances: string[] = [];
+    const other: string[] = [];
+
+    for (const value of expected) {
+      assert(
+        typeof value === "string",
+        "All expected entries have to be of type string",
+      );
+
+      if (kTypes.has(value)) {
+        types.push(value.toLowerCase());
+      } else if (classRegExp.exec(value) === null) {
+        assert(
+          value !== "object",
+          'The value "object" should be written as "Object"',
+        );
+        other.push(value);
+      } else {
+        instances.push(value);
+      }
+    }
+
+    // Special handle `object` in case other instances are allowed to outline
+    // the differences between each other.
+    if (instances.length > 0) {
+      const pos = types.indexOf("object");
+      if (pos !== -1) {
+        types.slice(pos, 1);
+        instances.push("Object");
+      }
+    }
+
+    if (types.length > 0) {
+      message += `${types.length > 1 ? "one of type" : "of type"} ${formatList(
+        types,
+        "or",
+      )}`;
+      if (instances.length > 0 || other.length > 0) message += " or ";
+    }
+
+    if (instances.length > 0) {
+      message += `an instance of ${formatList(instances, "or")}`;
+      if (other.length > 0) message += " or ";
+    }
+
+    if (other.length > 0) {
+      if (other.length > 1) {
+        message += `one of ${formatList(other, "or")}`;
+      } else {
+        if (other[0]?.toLowerCase() !== other[0]) message += "an ";
+        message += `${other[0]}`;
+      }
+    }
+
+    message += `. Received ${determineSpecificType(actual)}`;
+
+    return message;
+  },
+  TypeError,
+);
+
+export const ERR_INVALID_MODULE_SPECIFIER = createError(
+  "ERR_INVALID_MODULE_SPECIFIER",
+  /**
+   * @param {string} request
+   * @param {string} reason
+   * @param {string} [base]
+   */
+  (request: string, reason: string, base?: string) => {
+    return `Invalid module "${request}" ${reason}${
+      base ? ` imported from ${base}` : ""
+    }`;
+  },
+  TypeError,
+);
+
+export const ERR_INVALID_PACKAGE_CONFIG = createError(
+  "ERR_INVALID_PACKAGE_CONFIG",
+  (path: string, base?: string, message?: string) => {
+    return `Invalid package config ${path}${
+      base ? ` while importing ${base}` : ""
+    }${message ? `. ${message}` : ""}`;
+  },
+  Error,
+);
+
+export const ERR_INVALID_PACKAGE_TARGET = createError(
+  "ERR_INVALID_PACKAGE_TARGET",
+  (
+    packagePath: string,
+    key: string,
+    target: unknown,
+    isImport: boolean = false,
+    base?: string,
+  ) => {
+    const relatedError =
+      typeof target === "string" &&
+      !isImport &&
+      target.length > 0 &&
+      !target.startsWith("./");
+    if (key === ".") {
+      assert(isImport === false);
+      return (
+        `Invalid "exports" main target ${JSON.stringify(target)} defined ` +
+        `in the package config ${packagePath}package.json${
+          base ? ` imported from ${base}` : ""
+        }${relatedError ? '; targets must start with "./"' : ""}`
+      );
+    }
+
+    return `Invalid "${
+      isImport ? "imports" : "exports"
+    }" target ${JSON.stringify(
+      target,
+    )} defined for '${key}' in the package config ${packagePath}package.json${
+      base ? ` imported from ${base}` : ""
+    }${relatedError ? '; targets must start with "./"' : ""}`;
+  },
+  Error,
+);
+
+export const ERR_MODULE_NOT_FOUND = createError(
+  "ERR_MODULE_NOT_FOUND",
+  (path: string, base: string, exactUrl: boolean = false) => {
+    return `Cannot find ${
+      exactUrl ? "module" : "package"
+    } '${path}' imported from ${base}`;
+  },
+  Error,
+);
+
+export const ERR_NETWORK_IMPORT_DISALLOWED = createError(
+  "ERR_NETWORK_IMPORT_DISALLOWED",
+  "import of '%s' by %s is not supported: %s",
+  Error,
+);
+
+export const ERR_PACKAGE_IMPORT_NOT_DEFINED = createError(
+  "ERR_PACKAGE_IMPORT_NOT_DEFINED",
+  (specifier: string, packagePath: string | undefined, base: string) => {
+    return `Package import specifier "${specifier}" is not defined${
+      packagePath ? ` in package ${packagePath || ""}package.json` : ""
+    } imported from ${base}`;
+  },
+  TypeError,
+);
+
+export const ERR_PACKAGE_PATH_NOT_EXPORTED = createError(
+  "ERR_PACKAGE_PATH_NOT_EXPORTED",
+  /**
+   * @param {string} packagePath
+   * @param {string} subpath
+   * @param {string} [base]
+   */
+  (packagePath: string, subpath: string, base?: string) => {
+    if (subpath === ".")
+      return `No "exports" main defined in ${packagePath}package.json${
+        base ? ` imported from ${base}` : ""
+      }`;
+    return `Package subpath '${subpath}' is not defined by "exports" in ${packagePath}package.json${
+      base ? ` imported from ${base}` : ""
+    }`;
+  },
+  Error,
+);
+
+export const ERR_UNSUPPORTED_DIR_IMPORT = createError(
+  "ERR_UNSUPPORTED_DIR_IMPORT",
+  "Directory import '%s' is not supported " +
+    "resolving ES modules imported from %s",
+  Error,
+);
+
+export const ERR_UNSUPPORTED_RESOLVE_REQUEST = createError(
+  "ERR_UNSUPPORTED_RESOLVE_REQUEST",
+  'Failed to resolve module specifier "%s" from "%s": Invalid relative URL or base scheme is not hierarchical.',
+  TypeError,
+);
+
+export const ERR_UNKNOWN_FILE_EXTENSION = createError(
+  "ERR_UNKNOWN_FILE_EXTENSION",
+  (extension: string, path: string) => {
+    return `Unknown file extension "${extension}" for ${path}`;
+  },
+  TypeError,
+);
+
+export const ERR_INVALID_ARG_VALUE = createError(
+  "ERR_INVALID_ARG_VALUE",
+  (name: string, value: unknown, reason: string = "is invalid") => {
+    let inspected = inspect(value);
+
+    if (inspected.length > 128) {
+      inspected = `${inspected.slice(0, 128)}...`;
+    }
+
+    const type = name.includes(".") ? "property" : "argument";
+
+    return `The ${type} '${name}' ${reason}. Received ${inspected}`;
+  },
+  TypeError,
+  // Note: extra classes have been shaken out.
+  // , RangeError
+);
