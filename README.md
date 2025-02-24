@@ -54,6 +54,19 @@ Differences between `resolveModuleURL` and `resolveModulePath`:
 - `resolveModulePath` returns an absolute path like `/app/dep.mjs`.
   - If the resolved URL does not use the `file://` scheme (for example, `data:` or `node:`), it will throw an error.
 
+## Performance tips
+
+Resolution can be an expensive operation with variety of fallbacks and filesystem checks.
+
+By making more strict assumptions, we can reduce this.
+
+- Set [`suffix`](#suffixes) to `[]`.
+  - Make sure if file is named `index.[ext]`, input always ends with `/index`.
+- Set [`extension`](#extensions) to `[]`.
+  - Make sure input always with explicit extension.
+- Use explicit format extensions (`.mjs` or `.cjs`) instead of ambiguous `.js`.
+  - This allows resolution algorithm to work without need to find and read closest `package.json` for [`type`](https://nodejs.org/api/packages.html#type) field.
+
 ## Resolve options
 
 ### `from`
