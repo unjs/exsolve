@@ -4,6 +4,7 @@ import { builtinModules } from "node:module";
 import { joinURL } from "ufo";
 import { isAbsolute } from "pathe";
 import { moduleResolve } from "./internal/resolve.ts";
+import { extname } from "node:path";
 
 const DEFAULT_CONDITIONS_SET = new Set(["node", "import"]);
 
@@ -27,21 +28,31 @@ const NOT_FOUND_ERRORS = new Set([
 export interface ResolveOptions {
   /**
    * A URL, path or array of URLs/paths to resolve against.
+   *
+   * Default: current working directory.
    */
   from?: string | URL | (string | URL)[];
 
   /**
    * Additional file extensions to consider when resolving modules.
+   *
+   * NOTE: Extension fallbacks are only checked if input does not have an explicit extension.
+   *
+   * Default: `[".mjs", ".cjs", ".js", ".mts", ".cts", ".ts", ".json"]`
    */
   extensions?: string[];
 
   /**
    * Conditions to apply when resolving package exports.
+   *
+   * Default: `["node", "import"]`
    */
   conditions?: string[];
 
   /**
    * Suffixes to check as fallback. By default /index will be checked.
+   *
+   * Default: `["/index"]`
    */
   suffixes?: string[];
 }
@@ -109,9 +120,11 @@ export function resolveModuleURL(
     if (resolved) {
       break;
     }
-    // Try other extensions if not found
+    // Try other extensions and suffixes if not found
+    const extensionsToCheck =
+      extname(id) === "" ? options.extensions || DEFAULT_EXTENSIONS : [""];
     for (const suffix of ["", ...(options.suffixes || ["/index"])]) {
-      for (const extension of options.extensions || DEFAULT_EXTENSIONS) {
+      for (const extension of extensionsToCheck) {
         resolved = _tryModuleResolve(
           joinURL(id, suffix) + extension,
           url,

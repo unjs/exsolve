@@ -42,7 +42,7 @@ describe("resolveModuleURL", () => {
   }
 
   it("follows symlinks", () => {
-    const resolved = resolveModuleURL("./fixture/hello.link", {
+    const resolved = resolveModuleURL("./fixture/hello.link.mjs", {
       from: import.meta.url,
     });
     expect(fileURLToPath(resolved)).match(/fixture\/hello\.mjs$/);
