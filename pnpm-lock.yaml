@@ -7,9 +7,6 @@ settings:
 importers:
   .:
     dependencies:
-      import-meta-resolve:
-        specifier: ^4.1.0
-        version: 4.1.0
       pathe:
         specifier: ^2.0.3
         version: 2.0.3
@@ -2107,12 +2104,6 @@ packages:
         integrity: sha512-TR3KfrTZTYLPB6jUjfx6MF9WcWrHL9su5TObK4ZkYgBdWKPOFoSoQIdEuTuR82pmtxH2spWG9h6etwfr1pLBqQ==,
       }
     engines: { node: ">=6" }
-
-  import-meta-resolve@4.1.0:
-    resolution:
-      {
-        integrity: sha512-I6fiaX09Xivtk+THaMfAwnA3MVA5Big1WHF1Dfx9hFuvNIWpXnorlkzhcQf6ehrqQiiZECRt1poOAkPmer3ruw==,
-      }
 
   imurmurhash@0.1.4:
     resolution:
@@ -5064,8 +5055,6 @@ snapshots:
     dependencies:
       parent-module: 1.0.1
       resolve-from: 4.0.0
-
-  import-meta-resolve@4.1.0: {}
 
   imurmurhash@0.1.4: {}
 
