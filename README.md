@@ -14,8 +14,10 @@ This library exposes an API similar to [`import.meta.resolve`](https://nodejs.or
 - Pure JS with no native dependencies (only Node.js is required).
 - Stable and versioned behavior.
 - Throws an error if the resolved path does not exist in the filesystem.
-- Can resolve [`from`](#from) using one or more parent URLs.
-- Can override the default [`conditions`](#conditions).
+- Can override the default [conditions](#conditions).
+- Can resolve [from](#from) one or more parent URLs.
+- Can resolve with implicit `/index` [suffix](#suffixes) as fallback.
+- Can resolve with implicit [extensions](#extensions) if not provided.
 
 ## Usage
 
@@ -62,7 +64,7 @@ A URL, path or array of URLs/paths to resolve module against them.
 
 ### `extensions`
 
-- Default `[".mjs", ".cjs", ".js", ".json"]`
+- Default `[".mjs", ".cjs", ".js", ".mts", ".cts", ".ts", ".json"]`
 
 Additional file extensions to consider when resolving modules.
 

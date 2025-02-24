@@ -7,7 +7,15 @@ import { moduleResolve } from "./internal/resolve.ts";
 
 const DEFAULT_CONDITIONS_SET = new Set(["node", "import"]);
 
-const DEFAULT_EXTENSIONS = [".mjs", ".cjs", ".js", ".json"];
+const DEFAULT_EXTENSIONS = [
+  ".mjs",
+  ".cjs",
+  ".js",
+  ".mts",
+  ".cts",
+  ".ts",
+  ".json",
+];
 
 const NOT_FOUND_ERRORS = new Set([
   "ERR_MODULE_NOT_FOUND",

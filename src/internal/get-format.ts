@@ -7,14 +7,17 @@ import { ERR_UNKNOWN_FILE_EXTENSION } from "./errors.ts";
 
 const hasOwnProperty = {}.hasOwnProperty;
 
-const extensionFormatMap: Record<string, string> = {
-  // @ts-expect-error: hush.
-  __proto__: null,
-  ".cjs": "commonjs",
-  ".js": "module",
-  ".json": "json",
-  ".mjs": "module",
-};
+const extensionFormatMap: Record<string, string | null> & { __proto__: null } =
+  {
+    __proto__: null,
+    ".json": "json",
+    ".cjs": "commonjs",
+    ".cts": "commonjs",
+    ".js": "module",
+    ".ts": "module",
+    ".mts": "module",
+    ".mjs": "module",
+  };
 
 type Protocol = "data:" | "file:" | "node:";
 
