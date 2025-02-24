@@ -35,7 +35,7 @@ export interface ResolveOptions {
   /**
    * Additional file extensions to consider when resolving modules.
    *
-   * NOTE: Extension fallbacks are only checked if input does not have an explicit extension.
+   * **NOTE:** Extension fallbacks are only checked if input does not have an explicit extension.
    *
    * Default: `[".mjs", ".cjs", ".js", ".mts", ".cts", ".ts", ".json"]`
    */
@@ -50,6 +50,8 @@ export interface ResolveOptions {
 
   /**
    * Suffixes to check as fallback. By default /index will be checked.
+   *
+   * **NOTE:** Suffix fallbacks are skipped if input itself ends with same suffix.
    *
    * Default: `["/index"]`
    */
@@ -123,6 +125,9 @@ export function resolveModuleURL(
     const extensionsToCheck =
       extname(id) === "" ? options.extensions || DEFAULT_EXTENSIONS : [""];
     for (const suffix of ["", ...(options.suffixes || ["/index"])]) {
+      if (suffix && id.endsWith(suffix)) {
+        continue;
+      }
       for (const extension of extensionsToCheck) {
         resolved = _tryModuleResolve(
           `${id}${suffix}`.replace(/\/+/g, "/") + extension,

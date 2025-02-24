@@ -86,6 +86,9 @@ Conditions to apply when resolving package exports.
 
 Suffixes to check as fallback.
 
+> [!NOTE]
+> For performance, suffix fallbacks are skipped if input itself ends with the same suffix.
+
 ### `extensions`
 
 - Default `[".mjs", ".cjs", ".js", ".mts", ".cts", ".ts", ".json"]`
