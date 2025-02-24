@@ -22,8 +22,6 @@ export type PackageConfig = {
 
 import type { ErrnoException } from "./errors.ts";
 
-type PackageType = "commonjs" | "module" | "none";
-
 const hasOwnProperty = {}.hasOwnProperty;
 
 const cache: Map<string, PackageConfig> = new Map();
