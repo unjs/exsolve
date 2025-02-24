@@ -45,12 +45,12 @@ describe("resolveModuleURL", () => {
     const resolved = resolveModuleURL("./fixture/hello.link.mjs", {
       from: import.meta.url,
     });
-    expect(fileURLToPath(resolved)).match(/fixture\/hello\.mjs$/);
+    expect(fileURLToPath(resolved)).match(/fixture[/\\]hello\.mjs$/);
 
     const resolved2 = resolveModuleURL("./fixture/test.link.txt", {
       from: import.meta.url,
     });
-    expect(fileURLToPath(resolved2)).match(/fixture\/test.txt$/);
+    expect(fileURLToPath(resolved2)).match(/fixture[/\\]test.txt$/);
   });
 
   it("resolves node built-ints", () => {
