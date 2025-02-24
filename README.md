@@ -56,16 +56,15 @@ Differences between `resolveModuleURL` and `resolveModulePath`:
 
 ## Performance tips
 
-Resolution can be an expensive operation with variety of fallbacks and filesystem checks.
+Resolution can be an expensive operation with various fallbacks and filesystem checks. By making stricter assumptions, we can reduce this.
 
-By making more strict assumptions, we can reduce this.
+### Disable [`suffixes`](#suffixes) and [`extensions`](#extensions)
 
-- Set [`suffix`](#suffixes) to `[]`.
-  - Make sure if file is named `index.[ext]`, input always ends with `/index`.
-- Set [`extension`](#extensions) to `[]`.
-  - Make sure input always with explicit extension.
-- Use explicit format extensions (`.mjs` or `.cjs`) instead of ambiguous `.js`.
-  - This allows resolution algorithm to work without need to find and read closest `package.json` for [`type`](https://nodejs.org/api/packages.html#type) field.
+Use `{ suffixes: [], extensions: [] }` and make sure resolve is always called with `./utils/index.ts` instead of `./utils`.
+
+### Use explicit module extensions `.mjs` or `.cjs` instead of `.js`
+
+This allows resolution fast-path to skip reading the closest `package.json` for the [`type`](https://nodejs.org/api/packages.html#type).
 
 ## Resolve options
 
@@ -74,12 +73,6 @@ By making more strict assumptions, we can reduce this.
 - Default: (current working directory)
 
 A URL, path or array of URLs/paths to resolve module against them.
-
-### `extensions`
-
-- Default `[".mjs", ".cjs", ".js", ".mts", ".cts", ".ts", ".json"]`
-
-Additional file extensions to consider when resolving modules.
 
 ### `conditions`
 
@@ -92,6 +85,15 @@ Conditions to apply when resolving package exports.
 - Default: `["/index"]`
 
 Suffixes to check as fallback.
+
+### `extensions`
+
+- Default `[".mjs", ".cjs", ".js", ".mts", ".cts", ".ts", ".json"]`
+
+Additional file extensions to consider when resolving modules.
+
+> [!NOTE]
+> For performance, extension fallbacks are only checked if input does not have an explicit extension.
 
 ## Development
 
