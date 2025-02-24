@@ -1,6 +1,22 @@
 # Changelog
 
 
+## v0.1.2
+
+[compare changes](https://github.com/unjs/exsolve/compare/v0.1.1...v0.1.2)
+
+### 🚀 Enhancements
+
+- `try` option ([f2275eb](https://github.com/unjs/exsolve/commit/f2275eb))
+
+### 🏡 Chore
+
+- Prettier ignore changelog ([408d81b](https://github.com/unjs/exsolve/commit/408d81b))
+
+### ❤️ Contributors
+
+- Pooya Parsa ([@pi0](http://github.com/pi0))
+
 ## v0.1.1
 
 [compare changes](https://github.com/unjs/exsolve/compare/v0.1.0...v0.1.1)
