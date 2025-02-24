@@ -5,7 +5,7 @@ import { resolveModuleURL, resolveModulePath } from "../src";
 
 const tests = [
   // Resolve to path
-  { input: "ufo", action: "resolves" },
+  { input: "vitest", action: "resolves" },
   { input: "./fixture/cjs.mjs", action: "resolves" },
   { input: "./fixture/foo", action: "resolves" },
   // Return same input as-is
