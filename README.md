@@ -66,6 +66,12 @@ Use `{ suffixes: [], extensions: [] }` and make sure resolve is always called wi
 
 This allows resolution fast-path to skip reading the closest `package.json` for the [`type`](https://nodejs.org/api/packages.html#type).
 
+### Make sure [`from`](#from) are explicit file URLs
+
+The paths set for [`from`](#from) should be absolute paths to the file that is requesting resolve.
+If it is set to an absolute path, resolver needs to first stat it to see if it is a file or directory.
+If input is `file://`, a URL or ends with `/`, resolver can skip this check.
+
 ## Resolve options
 
 ### `from`
@@ -73,6 +79,8 @@ This allows resolution fast-path to skip reading the closest `package.json` for 
 - Default: (current working directory)
 
 A URL, path or array of URLs/paths to resolve module against them.
+
+You can use `import.meta.url` for `from` to make behavior like `import.meta.resolve()`.
 
 ### `conditions`
 
