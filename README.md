@@ -72,6 +72,12 @@ Additional file extensions to consider when resolving modules.
 
 Conditions to apply when resolving package exports.
 
+### `suffixes`
+
+- Default: `["/index"]`
+
+Suffixes to check as fallback.
+
 ## Development
 
 <details>

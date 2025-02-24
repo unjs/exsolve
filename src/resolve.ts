@@ -31,6 +31,11 @@ export interface ResolveOptions {
    * Conditions to apply when resolving package exports.
    */
   conditions?: string[];
+
+  /**
+   * Suffixes to check as fallback. By default /index will be checked.
+   */
+  suffixes?: string[];
 }
 
 /**
@@ -97,7 +102,7 @@ export function resolveModuleURL(
       break;
     }
     // Try other extensions if not found
-    for (const suffix of ["", "/index"]) {
+    for (const suffix of ["", ...(options.suffixes || ["/index"])]) {
       for (const extension of options.extensions || DEFAULT_EXTENSIONS) {
         resolved = _tryModuleResolve(
           joinURL(id, suffix) + extension,
