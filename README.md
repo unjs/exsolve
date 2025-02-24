@@ -55,6 +55,10 @@ Differences between `resolveModuleURL` and `resolveModulePath`:
 
 ## Resolve options
 
+### `try`
+
+If set to `true` and module cannot be resolved, resolver will return `undefined` instead of throwing an error.
+
 ### `from`
 
 A URL, path, or array of URLs/paths to resolve the module from.

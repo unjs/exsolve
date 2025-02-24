@@ -56,6 +56,11 @@ export interface ResolveOptions {
    * Default: `["/index"]`
    */
   suffixes?: string[];
+
+  /**
+   * If `true`, will not throw error if module is not found instead will return `undefined`.
+   */
+  try?: boolean;
 }
 
 /**
@@ -65,10 +70,10 @@ export interface ResolveOptions {
  * @param {ResolveOptions} [options] - Options to resolve the module. See {@link ResolveOptions}.
  * @returns {string} The resolved URL as a string.
  */
-export function resolveModuleURL(
+export function resolveModuleURL<Opts extends ResolveOptions>(
   id: string | URL,
-  options: ResolveOptions = {},
-): string {
+  options?: Opts,
+): Opts["try"] extends true ? string | undefined : string {
   if (typeof id !== "string") {
     if (id instanceof URL) {
       id = fileURLToPath(id);
@@ -107,12 +112,12 @@ export function resolveModuleURL(
   }
 
   // Condition set
-  const conditionsSet = options.conditions
+  const conditionsSet = options?.conditions
     ? new Set(options.conditions)
     : DEFAULT_CONDITIONS_SET;
 
   // Search paths
-  const urls: URL[] = _normalizeResolveParents(options.from);
+  const urls: URL[] = _normalizeResolveParents(options?.from);
   let resolved: URL | undefined;
 
   for (const url of urls) {
@@ -123,8 +128,8 @@ export function resolveModuleURL(
     }
     // Try other extensions and suffixes if not found
     const extensionsToCheck =
-      extname(id) === "" ? options.extensions || DEFAULT_EXTENSIONS : [""];
-    for (const suffix of ["", ...(options.suffixes || ["/index"])]) {
+      extname(id) === "" ? options?.extensions || DEFAULT_EXTENSIONS : [""];
+    for (const suffix of ["", ...(options?.suffixes || ["/index"])]) {
       if (suffix && id.endsWith(suffix)) {
         continue;
       }
@@ -169,11 +174,14 @@ export function resolveModuleURL(
  * @param {ResolveOptions} [options] - Options to resolve the module. See {@link ResolveOptions}.
  * @returns {string} The resolved URL as a string.
  */
-export function resolveModulePath(
+export function resolveModulePath<Opts extends ResolveOptions>(
   id: string | URL,
-  options: ResolveOptions = {},
-): string {
-  return fileURLToPath(resolveModuleURL(id, options));
+  options?: Opts,
+): Opts["try"] extends true ? string | undefined : string {
+  const resolved = resolveModuleURL(id, options);
+  return (
+    resolved ? fileURLToPath(resolved) : undefined
+  ) as Opts["try"] extends true ? string | undefined : string;
 }
 
 // --- Internal ---
