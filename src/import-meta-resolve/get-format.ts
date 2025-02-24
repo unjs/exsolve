@@ -1,8 +1,8 @@
 // Source:  https://github.com/nodejs/node/blob/main/lib/internal/modules/esm/get_format.js
-// Changes: https://github.com/nodejs/node/commits/main/lib/internal/modules/esm/get_format.js?since=2024-04-29
+// Changes: https://github.com/nodejs/node/commits/main/lib/internal/modules/esm/get_format.js?since=2025-02-24
 
 import { fileURLToPath } from "node:url";
-import { getPackageType } from "./package-json-reader.ts";
+import { getPackageScopeConfig } from "./package-json-reader.ts";
 import { ERR_UNKNOWN_FILE_EXTENSION } from "./errors.ts";
 
 const hasOwnProperty = {}.hasOwnProperty;
@@ -16,7 +16,7 @@ const extensionFormatMap: Record<string, string> = {
   ".mjs": "module",
 };
 
-type Protocol = "data:" | "file:" | "http:" | "https:" | "node:";
+type Protocol = "data:" | "file:" | "node:";
 
 type ProtocolHandler = (
   parsed: URL,
@@ -30,8 +30,6 @@ const protocolHandlers: Record<Protocol, ProtocolHandler> & {
   __proto__: null,
   "data:": getDataProtocolModuleFormat,
   "file:": getFileProtocolModuleFormat,
-  "http:": getHttpProtocolModuleFormat,
-  "https:": getHttpProtocolModuleFormat,
   "node:": () => "builtin",
 };
 
@@ -86,10 +84,10 @@ function getFileProtocolModuleFormat(
   _context: unknown,
   ignoreErrors: boolean,
 ) {
-  const value = extname(url);
+  const ext = extname(url);
 
-  if (value === ".js") {
-    const packageType = getPackageType(url);
+  if (ext === ".js") {
+    const { type: packageType } = getPackageScopeConfig(url);
 
     if (packageType !== "none") {
       return packageType;
@@ -98,8 +96,8 @@ function getFileProtocolModuleFormat(
     return "commonjs";
   }
 
-  if (value === "") {
-    const packageType = getPackageType(url);
+  if (ext === "") {
+    const { type: packageType } = getPackageScopeConfig(url);
 
     // Legacy behavior
     if (packageType === "none" || packageType === "commonjs") {
@@ -111,7 +109,7 @@ function getFileProtocolModuleFormat(
     return "module";
   }
 
-  const format = extensionFormatMap[value];
+  const format = extensionFormatMap[ext];
   if (format) return format;
 
   // Explicit undefined return indicates load hook should rerun format check
@@ -120,11 +118,7 @@ function getFileProtocolModuleFormat(
   }
 
   const filepath = fileURLToPath(url);
-  throw new ERR_UNKNOWN_FILE_EXTENSION(value, filepath);
-}
-
-function getHttpProtocolModuleFormat() {
-  // To do: HTTPS imports.
+  throw new ERR_UNKNOWN_FILE_EXTENSION(ext, filepath);
 }
 
 export function defaultGetFormatWithoutErrors(

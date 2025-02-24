@@ -150,12 +150,3 @@ export function getPackageScopeConfig(resolved: URL | string): PackageConfig {
     type: "none",
   };
 }
-
-/**
- * Returns the package type for a given URL.
- * @param {URL} url - The URL to get the package type for.
- */
-export function getPackageType(url: URL): PackageType {
-  // To do @anonrig: Write a C++ function that returns only "type".
-  return getPackageScopeConfig(url).type;
-}
