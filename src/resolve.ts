@@ -1,8 +1,7 @@
 import { statSync } from "node:fs";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import { isAbsolute } from "node:path";
 import { builtinModules } from "node:module";
-import { joinURL } from "ufo";
-import { isAbsolute } from "pathe";
 import { moduleResolve } from "./internal/resolve.ts";
 import { extname } from "node:path";
 
@@ -126,7 +125,7 @@ export function resolveModuleURL(
     for (const suffix of ["", ...(options.suffixes || ["/index"])]) {
       for (const extension of extensionsToCheck) {
         resolved = _tryModuleResolve(
-          joinURL(id, suffix) + extension,
+          `${id}${suffix}`.replace(/\/+/g, "/") + extension,
           url,
           conditionsSet,
         );
