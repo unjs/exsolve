@@ -7,16 +7,15 @@
 
 <!-- /automd -->
 
-Node.js module resolution utils (based on previous work in [unjs/mlly](https://github.com/unjs/mlly), [wooorm/import-meta-resolve](https://github.com/wooorm/import-meta-resolve) and [Node.js](https://github.com/nodejs/node) upstream implementation.
-)
+> Module resolution utilities for Node.js (based on previous work in [unjs/mlly](https://github.com/unjs/mlly), [wooorm/import-meta-resolve](https://github.com/wooorm/import-meta-resolve), and the upstream [Node.js](https://github.com/nodejs/node) implementation).
 
-This library exposes Node.js [`import.meta.resolve`](https://nodejs.org/api/esm.html#importmetaresolvespecifier) with respect of [ESM Resolution algorithm](https://nodejs.org/api/esm.html#esm_resolution_algorithm) and all built-in functionalities (`package.json`, import maps, export maps, CJS and ESM) with some additions:
+This library exposes an API similar to [`import.meta.resolve`](https://nodejs.org/api/esm.html#importmetaresolvespecifier) based on Node.js upstream implementation and [resolution algorithm](https://nodejs.org/api/esm.html#esm_resolution_algorithm). It supports all built-in functionalities—`package.json`, import maps, export maps, CJS, and ESM—with some additions:
 
-- Pure JS without native dependencies (only Node.js required).
+- Pure JS with no native dependencies (only Node.js is required).
 - Stable and versioned behavior.
-- Throws error if the resolved path does not exists in the filesystem.
-- Can resolve [`from`](#from) single or multiple parent url(s).
-- Can override default [`conditions`](#conditions).
+- Throws an error if the resolved path does not exist in the filesystem.
+- Can resolve [`from`](#from) using one or more parent URLs.
+- Can override the default [`conditions`](#conditions).
 
 ## Usage
 
@@ -47,11 +46,11 @@ resolveModulePath(id, {
 });
 ```
 
-Different between `resolveModuleURL` and `resolveModulePath`:
+Differences between `resolveModuleURL` and `resolveModulePath`:
 
-- `resolveModuleURL` returns a URL string like `file:///app/dep.mjs`
-- `resolveModulePath` returns an absolute path like `/app/dep.mjs`
-  - If resolved url is not `file://` scheme (like `data:` or `node:`), it will throw an error
+- `resolveModuleURL` returns a URL string like `file:///app/dep.mjs`.
+- `resolveModulePath` returns an absolute path like `/app/dep.mjs`.
+  - If the resolved URL does not use the `file://` scheme (for example, `data:` or `node:`), it will throw an error.
 
 ## Resolve options
 
