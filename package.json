@@ -1,7 +1,7 @@
 {
   "name": "ores",
-  "version": "0.0.0",
-  "description": "",
+  "version": "0.1.0",
+  "description": "Module resolution utilities based on Node.js upstream implementation.",
   "repository": "unjs/ores",
   "license": "MIT",
   "sideEffects": false,
