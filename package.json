@@ -1,8 +1,8 @@
 {
-  "name": "ores",
+  "name": "exsolve",
   "version": "0.1.0",
   "description": "Module resolution utilities based on Node.js upstream implementation.",
-  "repository": "unjs/ores",
+  "repository": "unjs/exsolve",
   "license": "MIT",
   "sideEffects": false,
   "type": "module",

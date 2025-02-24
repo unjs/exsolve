@@ -1,9 +1,9 @@
-# ores
+# exsolve
 
 <!-- automd:badges color=yellow -->
 
-[![npm version](https://img.shields.io/npm/v/ores?color=yellow)](https://npmjs.com/package/ores)
-[![npm downloads](https://img.shields.io/npm/dm/ores?color=yellow)](https://npm.chart.dev/ores)
+[![npm version](https://img.shields.io/npm/v/exsolve?color=yellow)](https://npmjs.com/package/exsolve)
+[![npm downloads](https://img.shields.io/npm/dm/exsolve?color=yellow)](https://npm.chart.dev/exsolve)
 
 <!-- /automd -->
 
@@ -24,17 +24,17 @@ Install the package:
 
 ```sh
 # ✨ Auto-detect (npm, yarn, pnpm, bun, deno)
-npx nypm install ores
+npx nypm install exsolve
 ```
 
 Import:
 
 ```ts
 // ESM import
-import { resolveModuleURL, resolveModulePath } from "ores";
+import { resolveModuleURL, resolveModulePath } from "exsolve";
 
 // Or using dynamic import
-const { resolveModuleURL, resolveModulePath } = await import("ores");
+const { resolveModuleURL, resolveModulePath } = await import("exsolve");
 ```
 
 ```ts
@@ -117,6 +117,6 @@ This allows the resolution fast path to skip reading the closest `package.json` 
 
 ## License
 
-Published under the [MIT](https://github.com/unjs/ores/blob/main/LICENSE) license.
+Published under the [MIT](https://github.com/unjs/exsolve/blob/main/LICENSE) license.
 
 Based on previous work in [unjs/mlly](https://github.com/unjs/mlly), [wooorm/import-meta-resolve](https://github.com/wooorm/import-meta-resolve) and [Node.js](https://github.com/nodejs/node) original implementation.
