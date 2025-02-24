@@ -1,5 +1,6 @@
 // Source:  https://github.com/nodejs/node/blob/main/lib/internal/modules/esm/resolve.js
-// Changes: https://github.com/nodejs/node/commits/main/lib/internal/modules/esm/resolve.js?since=2024-04-29
+// Changes: https://github.com/nodejs/node/commits/main/lib/internal/modules/esm/resolve.js?since=2025-02-24
+// TODO: https://github.com/nodejs/node/commit/fb852798dcd3aceeeabbb07bc4b622157b7826e1#diff-b4c24f634e3741e5ad9e8c29864a48f2bd284a9d66d8fed3d077ccee0c44087b
 
 import type { Stats } from "node:fs";
 import type { ErrnoException } from "./errors.ts";
@@ -887,23 +888,20 @@ function packageResolve(
   // ResolveSelf
   const packageConfig = getPackageScopeConfig(base);
 
-  // Can’t test.
-  /* c8 ignore next 16 */
-  if (packageConfig.exists) {
+  if (
+    packageConfig.exists &&
+    packageConfig.name === packageName &&
+    packageConfig.exports !== undefined &&
+    packageConfig.exports !== null
+  ) {
     const packageJsonUrl = pathToFileURL(packageConfig.pjsonPath);
-    if (
-      packageConfig.name === packageName &&
-      packageConfig.exports !== undefined &&
-      packageConfig.exports !== null
-    ) {
-      return packageExportsResolve(
-        packageJsonUrl,
-        packageSubpath,
-        packageConfig,
-        base,
-        conditions,
-      );
-    }
+    return packageExportsResolve(
+      packageJsonUrl,
+      packageSubpath,
+      packageConfig,
+      base,
+      conditions,
+    );
   }
 
   let packageJsonUrl = new URL(
@@ -994,7 +992,6 @@ export function moduleResolve(
   // we don’t.
   const protocol = base.protocol;
   const isData = protocol === "data:";
-  const isRemote = isData || protocol === "http:" || protocol === "https:";
   // Order swapped from spec for minor perf gain.
   // Ok since relative URLs cannot parse as URLs.
   let resolved: URL | undefined;
@@ -1015,7 +1012,7 @@ export function moduleResolve(
       resolved = new URL(specifier);
     } catch (error_) {
       // Note: actual code uses `canBeRequiredWithoutScheme`.
-      if (isRemote && !builtinModules.includes(specifier)) {
+      if (isData && !builtinModules.includes(specifier)) {
         // @ts-expect-error TODO: type issue
         const error = new ERR_UNSUPPORTED_RESOLVE_REQUEST(specifier, base);
         error.cause = error_;

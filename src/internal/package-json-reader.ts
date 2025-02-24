@@ -1,5 +1,5 @@
 // Source:  https://github.com/nodejs/node/blob/main/lib/internal/modules/package_json_reader.js
-// Changes: https://github.com/nodejs/node/commits/main/lib/internal/modules/package_json_reader.js?since=2024-04-29
+// Changes: https://github.com/nodejs/node/commits/main/lib/internal/modules/package_json_reader.js?since=2025-02-24
 //
 // Notes:
 // - Removed the native dependency.

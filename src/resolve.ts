@@ -3,7 +3,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { builtinModules } from "node:module";
 import { joinURL } from "ufo";
 import { isAbsolute } from "pathe";
-import { moduleResolve } from "./import-meta-resolve/resolve.ts";
+import { moduleResolve } from "./internal/resolve.ts";
 
 const DEFAULT_CONDITIONS_SET = new Set(["node", "import"]);
 
