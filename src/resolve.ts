@@ -74,42 +74,29 @@ type ResolveRes<Opts extends ResolveOptions> = Opts["try"] extends true
 /**
  * Synchronously resolves a module url based on the options provided.
  *
- * @param {string} id - The identifier or path of the module to resolve.
+ * @param {string} input - The identifier or path of the module to resolve.
  * @param {ResolveOptions} [options] - Options to resolve the module. See {@link ResolveOptions}.
  * @returns {string} The resolved URL as a string.
  */
 export function resolveModuleURL<O extends ResolveOptions>(
-  id: string | URL,
+  input: string | URL,
   options?: O,
 ): ResolveRes<O> {
-  if (typeof id !== "string") {
-    if (id instanceof URL) {
-      id = fileURLToPath(id);
-    } else {
-      throw new TypeError("input must be a `string` or `URL`");
-    }
+  const parsedInput = _parseInput(input);
+
+  if ("external" in parsedInput) {
+    return parsedInput.external as ResolveRes<O>;
   }
 
-  // Skip if already has a protocol
-  if (/^(?:node|data|http|https):/.test(id)) {
-    return id;
-  }
-
-  // Skip builtins
-  if (builtinModules.includes(id)) {
-    return "node:" + id;
-  }
-
-  // Fast path for file urls
-  if (id.startsWith("file://")) {
-    id = fileURLToPath(id);
-  }
+  const specifier = (parsedInput as { specifier: string }).specifier;
+  const url = (parsedInput as { url: URL }).url;
+  const absolutePath = (parsedInput as { absolutePath: string }).absolutePath;
 
   // Check for cache
   let cacheKey: string | undefined;
   let cacheObj: Map<string, unknown> | undefined;
   if (options?.cache !== false) {
-    cacheKey = _cacheKey(id, options);
+    cacheKey = _cacheKey(absolutePath || specifier, options);
     cacheObj =
       options?.cache && typeof options?.cache === "object"
         ? options.cache
@@ -129,16 +116,15 @@ export function resolveModuleURL<O extends ResolveOptions>(
     }
   }
 
-  // Skip resolve for absolute paths (fast path)
-  if (isAbsolute(id)) {
+  // Absolute path to file (fast path)
+  if (absolutePath) {
     try {
-      const stat = statSync(id);
-      if (stat.isFile()) {
-        const url = pathToFileURL(id);
+      if (statSync(absolutePath).isFile()) {
+        const resolvedUrl = _urlToString(url);
         if (cacheObj) {
-          cacheObj.set(cacheKey!, url);
+          cacheObj.set(cacheKey!, resolvedUrl);
         }
-        return url.href;
+        return resolvedUrl;
       }
     } catch (error: any) {
       if (error?.code !== "ENOENT") {
@@ -155,18 +141,16 @@ export function resolveModuleURL<O extends ResolveOptions>(
     ? new Set(options.conditions)
     : DEFAULT_CONDITIONS_SET;
 
-  // Search paths
-  const urls: URL[] = _normalizeResolveParents(options?.from);
-  let resolved: URL | undefined;
-
+  // Search through bases
+  const bases: URL[] = _normalizeBases(options?.from);
   const suffixes = options?.suffixes || [""];
   const extensions = options?.extensions ? ["", ...options.extensions] : [""];
-
-  for (const url of urls) {
+  let resolved: URL | undefined;
+  for (const url of bases) {
     for (const suffix of suffixes) {
       for (const extension of extensions) {
         resolved = _tryModuleResolve(
-          `${id}${suffix}`.replace(/\/+/g, "/") + extension,
+          _join(specifier || absolutePath, suffix) + extension,
           url,
           conditionsSet,
         );
@@ -186,7 +170,7 @@ export function resolveModuleURL<O extends ResolveOptions>(
   // Throw error if not found
   if (!resolved) {
     const error = new Error(
-      `Cannot resolve module "${id}" (from: ${urls.map((u) => _fmtPath(u)).join(", ")})`,
+      `Cannot resolve module "${input}" (from: ${bases.map((u) => _fmtPath(u)).join(", ")})`,
     );
     // @ts-ignore
     error.code = "ERR_MODULE_NOT_FOUND";
@@ -202,15 +186,13 @@ export function resolveModuleURL<O extends ResolveOptions>(
     throw error;
   }
 
-  const normalizedURL = /^[a-z]:[\\/]/i.test(resolved.href)
-    ? pathToFileURL(resolved.href).href
-    : resolved.href;
+  const resolvedUrl = _urlToString(resolved);
 
   if (cacheObj) {
-    cacheObj.set(cacheKey!, normalizedURL);
+    cacheObj.set(cacheKey!, resolvedUrl);
   }
 
-  return normalizedURL;
+  return resolvedUrl;
 }
 
 /**
@@ -234,7 +216,7 @@ export function createResolver(defaults?: ResolverOptions) {
   if (defaults?.from) {
     defaults = {
       ...defaults,
-      from: _normalizeResolveParents(defaults?.from),
+      from: _normalizeBases(defaults?.from),
     };
   }
   return {
@@ -265,12 +247,12 @@ export function clearResolveCache() {
 // --- Internal ---
 
 function _tryModuleResolve(
-  id: string,
-  url: URL,
+  specifier: string,
+  base: URL,
   conditions: any,
 ): URL | undefined {
   try {
-    return moduleResolve(id, url, conditions);
+    return moduleResolve(specifier, base, conditions);
   } catch (error: any) {
     if (!NOT_FOUND_ERRORS.has(error?.code)) {
       throw error;
@@ -278,9 +260,9 @@ function _tryModuleResolve(
   }
 }
 
-function _normalizeResolveParents(inputs: unknown): URL[] {
+function _normalizeBases(inputs: unknown): URL[] {
   const urls = (Array.isArray(inputs) ? inputs : [inputs]).flatMap((input) =>
-    _normalizeResolveParent(input),
+    _normalizeBase(input),
   );
   if (urls.length === 0) {
     return [pathToFileURL("./")];
@@ -288,7 +270,7 @@ function _normalizeResolveParents(inputs: unknown): URL[] {
   return urls;
 }
 
-function _normalizeResolveParent(input: unknown): URL | URL[] {
+function _normalizeBase(input: unknown): URL | URL[] {
   if (!input) {
     return [];
   }
@@ -327,4 +309,54 @@ function _cacheKey(id: string, opts?: ResolveOptions) {
     opts?.from,
     opts?.suffixes,
   ]);
+}
+
+function _urlToString(url: URL): string {
+  return /^[a-z]:[\\/]/i.test(url.href)
+    ? pathToFileURL(url.href).href
+    : url.href;
+}
+
+function _join(a: string, b: string): string {
+  if (!a || !b || b === "/") {
+    return a;
+  }
+  return a.endsWith("/") ? a + b : a + "/" + b;
+}
+
+function _parseInput(
+  input: string | URL,
+):
+  | { url: URL; absolutePath: string }
+  | { external: string }
+  | { specifier: string } {
+  if (typeof input === "string") {
+    if (input.startsWith("file:")) {
+      const url = new URL(input);
+      return { url, absolutePath: fileURLToPath(url) };
+    }
+
+    if (isAbsolute(input)) {
+      return { url: pathToFileURL(input), absolutePath: input };
+    }
+
+    if (/^(?:node|data|http|https):/.test(input)) {
+      return { external: input };
+    }
+
+    if (builtinModules.includes(input)) {
+      return { external: `node:${input}` };
+    }
+
+    return { specifier: input };
+  }
+
+  if (input instanceof URL) {
+    if (input.protocol === "file:") {
+      return { url: input, absolutePath: fileURLToPath(input) };
+    }
+    return { external: input.href };
+  }
+
+  throw new TypeError("id must be a `string` or `URL`");
 }
