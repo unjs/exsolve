@@ -5,14 +5,21 @@ import { builtinModules } from "node:module";
 import { moduleResolve } from "./internal/resolve.ts";
 import { extname } from "node:path";
 
-const DEFAULT_CONDITIONS_SET = new Set(["node", "import"]);
+const DEFAULT_CONDITIONS_SET = /* #__PURE__ */ new Set(["node", "import"]);
 
-const NOT_FOUND_ERRORS = new Set([
+const NOT_FOUND_ERRORS = /* #__PURE__ */ new Set([
   "ERR_MODULE_NOT_FOUND",
   "ERR_UNSUPPORTED_DIR_IMPORT",
   "MODULE_NOT_FOUND",
   "ERR_PACKAGE_PATH_NOT_EXPORTED",
 ]);
+
+const globalCache = /* #__PURE__ */ (() =>
+  // eslint-disable-next-line unicorn/no-unreadable-iife
+  ((globalThis as any)["__EXSOLVE_CACHE__"] ||= new Map()))() as Map<
+  string,
+  unknown
+>;
 
 /**
  * Options to configure module resolution.
@@ -25,6 +32,13 @@ export type ResolveOptions = {
    * For better performance, use a `file://` URL or path that ends with `/`.
    */
   from?: string | URL | (string | URL)[];
+
+  /**
+   * Resolve cache (enabled by default with a shared global object).
+   *
+   * Can be set to `false` to disable or a custom `Map` to bring your own cache object.
+   */
+  cache?: boolean | Map<string, unknown>;
 
   /**
    * Additional file extensions to check as fallbacks.
@@ -89,9 +103,30 @@ export function resolveModuleURL<O extends ResolveOptions>(
     return "node:" + id;
   }
 
-  // Enable fast path for file urls
+  // Fast path for file urls
   if (id.startsWith("file://")) {
     id = fileURLToPath(id);
+  }
+
+  // Check for cache
+  let cacheKey: string | undefined;
+  let cacheObj: Map<string, unknown> | undefined;
+  if (options?.cache !== false) {
+    cacheKey = _cacheKey(id, options);
+    cacheObj =
+      options?.cache && typeof options?.cache === "object"
+        ? options.cache
+        : globalCache;
+  }
+
+  if (cacheObj) {
+    const cached = cacheObj.get(cacheKey!);
+    if (typeof cached === "string") {
+      return cached;
+    }
+    if (cached instanceof Error) {
+      throw cached;
+    }
   }
 
   // Skip resolve for absolute paths (fast path)
@@ -99,10 +134,16 @@ export function resolveModuleURL<O extends ResolveOptions>(
     try {
       const stat = statSync(id);
       if (stat.isFile()) {
+        if (cacheObj) {
+          cacheObj.set(cacheKey!, id);
+        }
         return id;
       }
     } catch (error: any) {
       if (error?.code !== "ENOENT") {
+        if (cacheObj) {
+          cacheObj.set(cacheKey!, error);
+        }
         throw error;
       }
     }
@@ -157,15 +198,25 @@ export function resolveModuleURL<O extends ResolveOptions>(
 
   // Throw error if not found
   if (!resolved) {
-    if (options?.try) {
-      return undefined as any;
-    }
     const error = new Error(
       `Cannot resolve module "${id}" (from: ${urls.map((u) => _fmtPath(u)).join(", ")})`,
     );
     // @ts-ignore
     error.code = "ERR_MODULE_NOT_FOUND";
+
+    if (cacheObj) {
+      cacheObj.set(cacheKey!, error);
+    }
+
+    if (options?.try) {
+      return undefined as any;
+    }
+
     throw error;
+  }
+
+  if (cacheObj) {
+    cacheObj.set(cacheKey!, resolved.href);
   }
 
   return resolved.href;
@@ -198,7 +249,20 @@ export function createResolver(defaults?: ResolverOptions) {
       id: string | URL,
       opts: ResolveOptions,
     ): ResolveRes<O> => resolveModulePath(id, { ...defaults, ...opts }),
+    clearResolveCache: () => {
+      if (defaults?.cache !== false) {
+        if (defaults?.cache && typeof defaults?.cache === "object") {
+          defaults.cache.clear();
+        } else {
+          globalCache.clear();
+        }
+      }
+    },
   };
+}
+
+export function clearResolveCache() {
+  globalCache.clear();
 }
 
 // --- Internal ---
@@ -256,4 +320,14 @@ function _fmtPath(input: URL | string) {
   } catch {
     return input;
   }
+}
+
+function _cacheKey(id: string, opts?: ResolveOptions) {
+  return JSON.stringify([
+    id,
+    (opts?.conditions || ["node", "import"]).sort(),
+    opts?.extensions,
+    opts?.from,
+    opts?.suffixes,
+  ]);
 }

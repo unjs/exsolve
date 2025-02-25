@@ -9,6 +9,7 @@
 This library exposes an API similar to [`import.meta.resolve`](https://nodejs.org/api/esm.html#importmetaresolvespecifier) based on Node.js's upstream implementation and [resolution algorithm](https://nodejs.org/api/esm.html#esm_resolution_algorithm). It supports all built-in functionalities—import maps, export maps, CJS, and ESM—with some additions:
 
 - Pure JS with no native dependencies (only Node.js is required).
+- Built-in resolve [cache](#resolve-cache).
 - Throws an error (or [try](#try)) if the resolved path does not exist in the filesystem.
 - Can override the default [conditions](#conditions).
 - Can resolve [from](#from) one or more parent URLs.
@@ -28,12 +29,15 @@ Import:
 
 ```ts
 // ESM import
-import { resolveModuleURL, resolveModulePath, createResolver } from "exsolve";
+import {
+  resolveModuleURL,
+  resolveModulePath,
+  createResolver,
+  clearResolveCache,
+} from "exsolve";
 
 // Or using dynamic import
-const { resolveModuleURL, resolveModulePath, createResolver } = await import(
-  "exsolve"
-);
+const { resolveModulePath } = await import("exsolve");
 ```
 
 ```ts
@@ -66,6 +70,36 @@ const { resolveModuleURL, resolveModulePath } = createResolver({
   extensions: [".mjs", ".cjs", ".js", ".mts", ".cts", ".ts", ".json"],
   conditions: ["node", "import", "production"],
 });
+```
+
+## Resolve cache
+
+To speedup resolution, resolved values (and errors) are globally cached with a unique key based on id and options.
+
+**Example:** Invalidate all (global) cache entries (to support file-system changes).
+
+```ts
+import { clearResolveCache } from "exsolve";
+
+clearResolveCache();
+```
+
+**Example:** Custom resolver with custom cache object.
+
+```ts
+import { createResolver } from "exsolve";
+
+const { clearResolveCache, resolveModulePath } = createResolver({
+  cache: new Map(),
+});
+```
+
+**Example:** Resolve without cache.
+
+```ts
+import { resolveModulePath } from "exsolve";
+
+resolveModulePath("id", { cache: false });
 ```
 
 ## Resolve Options
@@ -149,6 +183,14 @@ const src = resolveModulePath("./src/utils", {
 
 > [!TIP]
 > For better performance, use explicit `/index` when needed and avoid this option.
+
+### `cache`
+
+Resolve cache (enabled by default with a shared global object).
+
+Can be set to `false` to disable or a custom `Map` to bring your own cache object.
+
+See [cache](#cache) for more info.
 
 ## Other Performance Tips
 
