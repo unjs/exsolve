@@ -1,6 +1,32 @@
 # Changelog
 
 
+## v0.4.0
+
+[compare changes](https://github.com/unjs/exsolve/compare/v0.3.2...v0.4.0)
+
+### 🔥 Performance
+
+- Only test for protocol at beginning of id ([#4](https://github.com/unjs/exsolve/pull/4))
+- **createResolver:** Normalize default `from` once ([71432c8](https://github.com/unjs/exsolve/commit/71432c8))
+
+### 🩹 Fixes
+
+- Normalise windows urls ([#5](https://github.com/unjs/exsolve/pull/5))
+
+### 💅 Refactors
+
+- ⚠️  Allow reorder `""` suffix ([69ab48c](https://github.com/unjs/exsolve/commit/69ab48c))
+
+#### ⚠️ Breaking Changes
+
+- ⚠️  Allow reorder `""` suffix ([69ab48c](https://github.com/unjs/exsolve/commit/69ab48c))
+
+### ❤️ Contributors
+
+- Pooya Parsa ([@pi0](http://github.com/pi0))
+- Daniel Roe ([@danielroe](http://github.com/danielroe))
+
 ## v0.3.2
 
 [compare changes](https://github.com/unjs/exsolve/compare/v0.3.1...v0.3.2)
