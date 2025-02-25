@@ -1,6 +1,18 @@
 # Changelog
 
 
+## v0.3.2
+
+[compare changes](https://github.com/unjs/exsolve/compare/v0.3.1...v0.3.2)
+
+### 🩹 Fixes
+
+- Return `file://` url in absolute fast path ([9c99a04](https://github.com/unjs/exsolve/commit/9c99a04))
+
+### ❤️ Contributors
+
+- Pooya Parsa ([@pi0](http://github.com/pi0))
+
 ## v0.3.1
 
 [compare changes](https://github.com/unjs/exsolve/compare/v0.3.0...v0.3.1)
