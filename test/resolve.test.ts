@@ -1,4 +1,5 @@
 import { existsSync } from "node:fs";
+import { platform } from "node:os";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { describe, it, expect } from "vitest";
 import { resolveModuleURL, resolveModulePath } from "../src";
@@ -63,6 +64,22 @@ describe("resolveModuleURL", () => {
       from: import.meta.url,
     });
     expect(fileURLToPath(resolved2)).match(/fixture[/\\]test.txt$/);
+  });
+
+  it.runIf(platform() === "win32")("preserves casing", () => {
+    const DRIVE_LETTER_RE = /^\w(?=:)/;
+    const id = fileURLToPath(new URL("fixture/foo", import.meta.url));
+    const driveLetter = id.match(DRIVE_LETTER_RE)![0];
+    expect(driveLetter).toBe(driveLetter.toUpperCase());
+
+    const path = fileURLToPath(
+      resolveModuleURL(id, {
+        from: import.meta.url,
+      }),
+    );
+
+    const resolvedDriveLetter = path.match(DRIVE_LETTER_RE)![0];
+    expect(resolvedDriveLetter).toBe(driveLetter);
   });
 
   it("resolves node built-ints", () => {
