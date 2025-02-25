@@ -8,6 +8,10 @@ const tests = [
   { input: "vitest", action: "resolves" },
   { input: "./fixture/cjs.mjs", action: "resolves" },
   { input: "./fixture/foo", action: "resolves" },
+  {
+    input: fileURLToPath(new URL("fixture/foo", import.meta.url)),
+    action: "resolves",
+  },
   // Return same input as-is
   { input: "https://foo.com/a/b.js?a=1", action: "same" },
   // Throw error

@@ -219,11 +219,15 @@ export function resolveModuleURL<O extends ResolveOptions>(
     throw error;
   }
 
+  const normalizedURL = /^[a-z]:[\\/]/i.test(resolved.href)
+    ? pathToFileURL(resolved.href).href
+    : resolved.href;
+
   if (cacheObj) {
-    cacheObj.set(cacheKey!, resolved.href);
+    cacheObj.set(cacheKey!, normalizedURL);
   }
 
-  return resolved.href;
+  return normalizedURL;
 }
 
 /**
