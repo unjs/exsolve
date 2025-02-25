@@ -74,6 +74,19 @@ describe("resolveModuleURL", () => {
   });
 
   it("resolves node built-ins", () => {
+  it("should resolve suffixes fully on windows", () => {
+    const res = resolveModuleURL(
+      fileURLToPath(new URL("fixture/foo", import.meta.url)),
+      {
+        from: import.meta.url,
+        suffixes: ["/index"],
+        extensions: [".mjs"],
+      },
+    );
+    expect(res).toMatch(/\.mjs$/);
+  });
+
+  it("resolves node built-ints", () => {
     expect(resolveModuleURL("node:fs")).toBe("node:fs");
     expect(resolveModuleURL("fs")).toBe("node:fs");
     expect(resolveModuleURL("node:foo")).toBe("node:foo");
