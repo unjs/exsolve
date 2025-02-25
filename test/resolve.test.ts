@@ -65,7 +65,15 @@ describe("resolveModuleURL", () => {
     expect(fileURLToPath(resolved2)).match(/fixture[/\\]test.txt$/);
   });
 
-  it("resolves node built-ints", () => {
+  it("handles missing subpath imports", () => {
+    const resolved = resolveModuleURL("#build/auth.js", {
+      from: import.meta.url,
+      try: true,
+    });
+    expect(resolved).toMatchInlineSnapshot()
+  })
+
+  it("resolves node built-ins", () => {
     expect(resolveModuleURL("node:fs")).toBe("node:fs");
     expect(resolveModuleURL("fs")).toBe("node:fs");
     expect(resolveModuleURL("node:foo")).toBe("node:foo");
