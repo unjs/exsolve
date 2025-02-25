@@ -60,7 +60,7 @@ If set to `true` and the module cannot be resolved, the resolver returns `undefi
 
 ```ts
 // undefined
-const resolved = resolveModuleURL("non-existing-package");
+const resolved = resolveModuleURL("non-existing-package", { try: true });
 ```
 
 ### `from`
