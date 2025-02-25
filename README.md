@@ -9,11 +9,11 @@
 This library exposes an API similar to [`import.meta.resolve`](https://nodejs.org/api/esm.html#importmetaresolvespecifier) based on Node.js's upstream implementation and [resolution algorithm](https://nodejs.org/api/esm.html#esm_resolution_algorithm). It supports all built-in functionalities—import maps, export maps, CJS, and ESM—with some additions:
 
 - Pure JS with no native dependencies (only Node.js is required).
-- Throws an error if the resolved path does not exist in the filesystem.
+- Throws an error (or [try](#try)) if the resolved path does not exist in the filesystem.
 - Can override the default [conditions](#conditions).
 - Can resolve [from](#from) one or more parent URLs.
-- Can resolve with implicit `/index` [suffixes](#suffixes) as a fallback.
-- Can resolve with implicit [extensions](#extensions) if as fallback.
+- Can resolve with implicit `/index` [suffixes](#suffixes) as fallback.
+- Can resolve with implicit [extensions](#extensions) as fallback.
 
 ## Usage
 
@@ -72,7 +72,7 @@ If not provided, resolution starts from the current working directory. Setting t
 You can use `import.meta.url` for `from` to mimic the behavior of `import.meta.resolve()`.
 
 > [!TIP]
-> For better performance, ensure the value is a `file://` URL.
+> For better performance, ensure the value is a `file://` URL or at least ends with `/`.
 >
 > If it is set to an absolute path, the resolver must first check the filesystem to see if it is a file or directory.
 > If the input is a `file://` URL or ends with `/`, the resolver can skip this check.
