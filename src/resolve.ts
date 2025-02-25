@@ -120,7 +120,7 @@ export function resolveModuleURL<O extends ResolveOptions>(
   if (absolutePath) {
     try {
       if (statSync(absolutePath).isFile()) {
-        const resolvedUrl = urlToString(url);
+        const resolvedUrl = _urlToString(url);
         if (cacheObj) {
           cacheObj.set(cacheKey!, resolvedUrl);
         }
@@ -150,7 +150,7 @@ export function resolveModuleURL<O extends ResolveOptions>(
     for (const suffix of suffixes) {
       for (const extension of extensions) {
         resolved = _tryModuleResolve(
-          `${specifier || url}${suffix}`.replace(/\/+/g, "/") + extension,
+          _join(specifier || absolutePath, suffix) + extension,
           url,
           conditionsSet,
         );
@@ -186,7 +186,7 @@ export function resolveModuleURL<O extends ResolveOptions>(
     throw error;
   }
 
-  const resolvedUrl = urlToString(resolved);
+  const resolvedUrl = _urlToString(resolved);
 
   if (cacheObj) {
     cacheObj.set(cacheKey!, resolvedUrl);
@@ -311,10 +311,17 @@ function _cacheKey(id: string, opts?: ResolveOptions) {
   ]);
 }
 
-function urlToString(url: URL): string {
+function _urlToString(url: URL): string {
   return /^[a-z]:[\\/]/i.test(url.href)
     ? pathToFileURL(url.href).href
     : url.href;
+}
+
+function _join(a: string, b: string): string {
+  if (!a || !b || b === "/") {
+    return a;
+  }
+  return a.endsWith("/") ? a + b : a + "/" + b;
 }
 
 function _parseInput(
