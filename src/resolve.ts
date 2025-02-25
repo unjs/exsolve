@@ -17,7 +17,7 @@ const NOT_FOUND_ERRORS = new Set([
 /**
  * Options to configure module resolution.
  */
-export interface ResolveOptions {
+export type ResolveOptions = {
   /**
    * A URL, path, or array of URLs/paths from which to resolve the module.
    * If not provided, resolution starts from the current working directory.
@@ -52,7 +52,13 @@ export interface ResolveOptions {
    * the resolver returns `undefined` instead of throwing an error.
    */
   try?: boolean;
-}
+};
+
+export type ResolverOptions = Omit<ResolveOptions, "try">;
+
+type ResolveRes<Opts extends ResolveOptions> = Opts["try"] extends true
+  ? string | undefined
+  : string;
 
 /**
  * Synchronously resolves a module url based on the options provided.
@@ -61,10 +67,10 @@ export interface ResolveOptions {
  * @param {ResolveOptions} [options] - Options to resolve the module. See {@link ResolveOptions}.
  * @returns {string} The resolved URL as a string.
  */
-export function resolveModuleURL<Opts extends ResolveOptions>(
+export function resolveModuleURL<O extends ResolveOptions>(
   id: string | URL,
-  options?: Opts,
-): Opts["try"] extends true ? string | undefined : string {
+  options?: O,
+): ResolveRes<O> {
   if (typeof id !== "string") {
     if (id instanceof URL) {
       id = fileURLToPath(id);
@@ -174,14 +180,25 @@ export function resolveModuleURL<Opts extends ResolveOptions>(
  * @param {ResolveOptions} [options] - Options to resolve the module. See {@link ResolveOptions}.
  * @returns {string} The resolved URL as a string.
  */
-export function resolveModulePath<Opts extends ResolveOptions>(
+export function resolveModulePath<O extends ResolveOptions>(
   id: string | URL,
-  options?: Opts,
-): Opts["try"] extends true ? string | undefined : string {
+  options?: O,
+): ResolveRes<O> {
   const resolved = resolveModuleURL(id, options);
-  return (
-    resolved ? fileURLToPath(resolved) : undefined
-  ) as Opts["try"] extends true ? string | undefined : string;
+  return (resolved ? fileURLToPath(resolved) : undefined) as ResolveRes<O>;
+}
+
+export function createResolver(defaults?: ResolverOptions) {
+  return {
+    resolveModuleURL: <O extends ResolveOptions>(
+      id: string | URL,
+      opts: ResolveOptions,
+    ): ResolveRes<O> => resolveModuleURL(id, { ...defaults, ...opts }),
+    resolveModulePath: <O extends ResolveOptions>(
+      id: string | URL,
+      opts: ResolveOptions,
+    ): ResolveRes<O> => resolveModulePath(id, { ...defaults, ...opts }),
+  };
 }
 
 // --- Internal ---

@@ -28,10 +28,12 @@ Import:
 
 ```ts
 // ESM import
-import { resolveModuleURL, resolveModulePath } from "exsolve";
+import { resolveModuleURL, resolveModulePath, createResolver } from "exsolve";
 
 // Or using dynamic import
-const { resolveModuleURL, resolveModulePath } = await import("exsolve");
+const { resolveModuleURL, resolveModulePath, createResolver } = await import(
+  "exsolve"
+);
 ```
 
 ```ts
@@ -49,6 +51,22 @@ Differences between `resolveModuleURL` and `resolveModulePath`:
 - `resolveModuleURL` returns a URL string like `file:///app/dep.mjs`.
 - `resolveModulePath` returns an absolute path like `/app/dep.mjs`.
   - If the resolved URL does not use the `file://` scheme (e.g., `data:` or `node:`), it will throw an error.
+
+## Resolver with options
+
+You can create a custom resolver instance with default [options](#resolve-options) using `createResolver`.
+
+**Example:**
+
+```ts
+import { createResolver } from "exsolve";
+
+const { resolveModuleURL, resolveModulePath } = createResolver({
+  suffixes: ["/index"],
+  extensions: [".mjs", ".cjs", ".js", ".mts", ".cts", ".ts", ".json"],
+  conditions: ["node", "import", "production"],
+});
+```
 
 ## Resolve Options
 
