@@ -219,7 +219,9 @@ export function resolveModuleURL<O extends ResolveOptions>(
     throw error;
   }
 
-  const normalizedURL = /^[a-z]:[\\/]/i.test(resolved.href) ? pathToFileURL(resolved.href).href : resolved.href
+  const normalizedURL = /^[a-z]:[\\/]/i.test(resolved.href)
+    ? pathToFileURL(resolved.href).href
+    : resolved.href;
 
   if (cacheObj) {
     cacheObj.set(cacheKey!, normalizedURL);
