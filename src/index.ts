@@ -6,5 +6,3 @@ export {
   createResolver,
   clearResolveCache,
 } from "./resolve.ts";
-
-
