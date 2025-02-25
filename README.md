@@ -74,7 +74,7 @@ const { resolveModuleURL, resolveModulePath } = createResolver({
 
 ## Resolve cache
 
-To speedup resolution, resolved values (and errors) are globally cached with a unique key based on id and options.
+To speed up resolution, resolved values (and errors) are globally cached with a unique key based on id and options.
 
 **Example:** Invalidate all (global) cache entries (to support file-system changes).
 
