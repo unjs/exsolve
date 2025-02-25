@@ -94,7 +94,7 @@ export function resolveModuleURL<O extends ResolveOptions>(
   }
 
   // Skip if already has a protocol
-  if (/(node|data|http|https):/.test(id)) {
+  if (/^(?:node|data|http|https):/.test(id)) {
     return id;
   }
 
