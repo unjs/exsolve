@@ -14,7 +14,7 @@ This library exposes an API similar to [`import.meta.resolve`](https://nodejs.or
 - Can override the default [conditions](#conditions).
 - Can resolve [from](#from) one or more parent URLs.
 - Can resolve with custom [suffixes](#suffixes).
-- Can resolve with implicit [extensions](#extensions) as fallback.
+- Can resolve with custom [extensions](#extensions).
 
 ## Usage
 
@@ -158,9 +158,6 @@ const src = resolveModulePath("./src/index", {
 });
 ```
 
-> [!NOTE]
-> Extension fallbacks are only checked if the input does not have an explicit extension.
-
 > [!TIP]
 > For better performance, use explicit extensions and avoid this option.
 
@@ -177,9 +174,6 @@ const src = resolveModulePath("./src/utils", {
   extensions: [".mjs", ".cjs", ".js"],
 });
 ```
-
-> [!NOTE]
-> Suffix fallbacks are skipped if the input ends with the same suffix.
 
 > [!TIP]
 > For better performance, use explicit `/index` when needed and avoid this option.

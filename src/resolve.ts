@@ -3,7 +3,6 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { isAbsolute } from "node:path";
 import { builtinModules } from "node:module";
 import { moduleResolve } from "./internal/resolve.ts";
-import { extname } from "node:path";
 
 const DEFAULT_CONDITIONS_SET = /* #__PURE__ */ new Set(["node", "import"]);
 
@@ -35,15 +34,13 @@ export type ResolveOptions = {
 
   /**
    * Resolve cache (enabled by default with a shared global object).
-   *
    * Can be set to `false` to disable or a custom `Map` to bring your own cache object.
    */
   cache?: boolean | Map<string, unknown>;
 
   /**
-   * Additional file extensions to check as fallback.
-   * These are used only if the input does not have an explicit extension.
-   * For better performance, use explicit extensions.
+   * Additional file extensions to check.
+   * For better performance, use explicit extensions and avoid this option.
    */
   extensions?: string[];
 
@@ -56,11 +53,8 @@ export type ResolveOptions = {
 
   /**
    * Path suffixes to check.
-   * Suffixes are skipped if the input ends with the same suffix.
-   *
-   * @example ["", "/index"]
-   *
-   * For better performance, use explicit suffix like `/index` when needed.
+   * For better performance, use explicit paths and avoid this option.
+   * Example: `["", "/index"]`
    */
   suffixes?: string[];
 
@@ -165,19 +159,12 @@ export function resolveModuleURL<O extends ResolveOptions>(
   const urls: URL[] = _normalizeResolveParents(options?.from);
   let resolved: URL | undefined;
 
-  const suffixesToCheck = options?.suffixes || [""];
-
-  const extensionsToCheck =
-    extname(id) === "" /* no extension */
-      ? ["", ...(options?.extensions || [])]
-      : [""];
+  const suffixes = options?.suffixes || [""];
+  const extensions = options?.extensions ? ["", ...options.extensions] : [""];
 
   for (const url of urls) {
-    for (const suffix of suffixesToCheck) {
-      if (suffix && id.endsWith(suffix)) {
-        continue;
-      }
-      for (const extension of extensionsToCheck) {
+    for (const suffix of suffixes) {
+      for (const extension of extensions) {
         resolved = _tryModuleResolve(
           `${id}${suffix}`.replace(/\/+/g, "/") + extension,
           url,
