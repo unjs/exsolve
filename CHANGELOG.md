@@ -1,6 +1,34 @@
 # Changelog
 
 
+## v0.3.0
+
+[compare changes](https://github.com/unjs/exsolve/compare/v0.2.0...v0.3.0)
+
+### 🚀 Enhancements
+
+- `createResolver` ([064396b](https://github.com/unjs/exsolve/commit/064396b))
+- Resolve cache ([d4ef4e9](https://github.com/unjs/exsolve/commit/d4ef4e9))
+
+### 🔥 Performance
+
+- ⚠️  Remove default extra fallbacks ([6b8cd74](https://github.com/unjs/exsolve/commit/6b8cd74))
+
+### 🏡 Chore
+
+- **release:** V0.2.0 ([bff9874](https://github.com/unjs/exsolve/commit/bff9874))
+- Add pkg size badge ([a9a5b25](https://github.com/unjs/exsolve/commit/a9a5b25))
+- Update docs ([28ea154](https://github.com/unjs/exsolve/commit/28ea154))
+- Update docs ([4cb89e2](https://github.com/unjs/exsolve/commit/4cb89e2))
+
+#### ⚠️ Breaking Changes
+
+- ⚠️  Remove default extra fallbacks ([6b8cd74](https://github.com/unjs/exsolve/commit/6b8cd74))
+
+### ❤️ Contributors
+
+- Pooya Parsa ([@pi0](http://github.com/pi0))
+
 ## v0.2.0
 
 [compare changes](https://github.com/unjs/exsolve/compare/v0.1.4...v0.2.0)
