@@ -125,6 +125,9 @@ export function resolveModuleURL<O extends ResolveOptions>(
       return cached;
     }
     if (cached instanceof Error) {
+      if (options?.try) {
+        return undefined as any;
+      }
       throw cached;
     }
   }
