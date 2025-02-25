@@ -15,6 +15,10 @@ const tests = [
   { input: "/non/existent", action: "throws" },
 ] as const;
 
+const extensions = [".mjs", ".cjs", ".js", ".mts", ".cts", ".ts", ".json"];
+
+const suffixes = ["/index"];
+
 describe("resolveModuleURL", () => {
   for (const test of tests) {
     it(`${test.input} should ${test.action}`, () => {
@@ -22,6 +26,8 @@ describe("resolveModuleURL", () => {
         case "resolves": {
           const resolved = resolveModuleURL(test.input, {
             from: import.meta.url,
+            extensions,
+            suffixes,
           });
           expect(existsSync(fileURLToPath(resolved))).toBe(true);
           break;
@@ -29,6 +35,8 @@ describe("resolveModuleURL", () => {
         case "same": {
           const resolved = resolveModuleURL(test.input, {
             from: import.meta.url,
+            extensions,
+            suffixes,
           });
           expect(resolved).toBe(test.input);
           break;
@@ -68,6 +76,8 @@ describe("resolveModulePath", () => {
         case "resolves": {
           const resolved = resolveModulePath(test.input, {
             from: import.meta.url,
+            extensions,
+            suffixes,
           });
           expect(existsSync(resolved)).toBe(true);
           break;
@@ -75,6 +85,8 @@ describe("resolveModulePath", () => {
         case "same": {
           const resolved = resolveModulePath(test.input, {
             from: import.meta.url,
+            extensions,
+            suffixes,
           });
           expect(resolved).toBe(test.input);
           break;

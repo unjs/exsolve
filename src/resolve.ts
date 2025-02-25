@@ -7,16 +7,6 @@ import { extname } from "node:path";
 
 const DEFAULT_CONDITIONS_SET = new Set(["node", "import"]);
 
-const DEFAULT_EXTENSIONS = [
-  ".mjs",
-  ".cjs",
-  ".js",
-  ".mts",
-  ".cts",
-  ".ts",
-  ".json",
-];
-
 const NOT_FOUND_ERRORS = new Set([
   "ERR_MODULE_NOT_FOUND",
   "ERR_UNSUPPORTED_DIR_IMPORT",
@@ -24,41 +14,42 @@ const NOT_FOUND_ERRORS = new Set([
   "ERR_PACKAGE_PATH_NOT_EXPORTED",
 ]);
 
+/**
+ * Options to configure module resolution.
+ */
 export interface ResolveOptions {
   /**
-   * A URL, path or array of URLs/paths to resolve against.
-   *
-   * Default: current working directory.
+   * A URL, path, or array of URLs/paths from which to resolve the module.
+   * If not provided, resolution starts from the current working directory.
+   * You can use `import.meta.url` to mimic the behavior of `import.meta.resolve()`.
+   * For better performance, use a `file://` URL or path that ends with `/`.
    */
   from?: string | URL | (string | URL)[];
 
   /**
-   * Additional file extensions to consider when resolving modules.
-   *
-   * **NOTE:** Extension fallbacks are only checked if input does not have an explicit extension.
-   *
-   * Default: `[".mjs", ".cjs", ".js", ".mts", ".cts", ".ts", ".json"]`
+   * Additional file extensions to check as fallbacks.
+   * These are used only if the input does not have an explicit extension.
+   * For better performance, use explicit extensions.
    */
   extensions?: string[];
 
   /**
    * Conditions to apply when resolving package exports.
-   *
-   * Default: `["node", "import"]`
+   * Defaults to `["node", "import"]`.
+   * Conditions are applied without order.
    */
   conditions?: string[];
 
   /**
-   * Suffixes to check as fallback. By default /index will be checked.
-   *
-   * **NOTE:** Suffix fallbacks are skipped if input itself ends with same suffix.
-   *
-   * Default: `["/index"]`
+   * Additional path suffixes to check as fallbacks.
+   * Suffix fallbacks are skipped if the input ends with the same suffix.
+   * For better performance, use explicit suffix like `/index` when needed.
    */
   suffixes?: string[];
 
   /**
-   * If `true`, will not throw error if module is not found instead will return `undefined`.
+   * If set to `true` and the module cannot be resolved,
+   * the resolver returns `undefined` instead of throwing an error.
    */
   try?: boolean;
 }
@@ -120,10 +111,10 @@ export function resolveModuleURL<Opts extends ResolveOptions>(
   const urls: URL[] = _normalizeResolveParents(options?.from);
   let resolved: URL | undefined;
 
-  const extensionsToCheck =
-    extname(id) === "" /* has extension */
-      ? options?.extensions || DEFAULT_EXTENSIONS
-      : [];
+  const extensionsToCheck = (extname(id) === "" /* no extension */ &&
+    options?.extensions) || [""];
+
+  const suffixesToCheck = ["", ...(options?.suffixes || [])];
 
   for (const url of urls) {
     // Try simple resolve
@@ -132,11 +123,11 @@ export function resolveModuleURL<Opts extends ResolveOptions>(
       break;
     }
     // Try other extensions and suffixes if not found
-    for (const suffix of ["", ...(options?.suffixes || ["/index"])]) {
+    for (const suffix of suffixesToCheck) {
       if (suffix && id.endsWith(suffix)) {
         continue;
       }
-      for (const extension of ["", ...extensionsToCheck]) {
+      for (const extension of extensionsToCheck) {
         if (!suffix && !extension) {
           continue;
         }

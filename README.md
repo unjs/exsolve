@@ -53,51 +53,87 @@ Differences between `resolveModuleURL` and `resolveModulePath`:
 - `resolveModulePath` returns an absolute path like `/app/dep.mjs`.
   - If the resolved URL does not use the `file://` scheme (e.g., `data:` or `node:`), it will throw an error.
 
-## Resolve options
+## Resolve Options
 
 ### `try`
 
-If set to `true` and module cannot be resolved, resolver will return `undefined` instead of throwing an error.
+If set to `true` and the module cannot be resolved, the resolver returns `undefined` instead of throwing an error.
+
+**Example:**
+
+```ts
+// undefined
+const resolved = resolveModuleURL("non-existing-package");
+```
 
 ### `from`
 
-A URL, path, or array of URLs/paths to resolve the module from.
+A URL, path, or array of URLs/paths from which to resolve the module.
 
-If not provided, the resolution will start from the current working directory, but setting it is highly recommended.
+If not provided, resolution starts from the current working directory. Setting this option is recommended.
 
 You can use `import.meta.url` for `from` to mimic the behavior of `import.meta.resolve()`.
 
 > [!TIP]
 > For better performance, ensure the value is a `file://` URL.
 >
-> If it is set to an absolute path, the resolver first checks the filesystem to determine if it is a file or directory.
+> If it is set to an absolute path, the resolver must first check the filesystem to see if it is a file or directory.
 > If the input is a `file://` URL or ends with `/`, the resolver can skip this check.
 
 ### `conditions`
 
 Conditions to apply when resolving package exports (default: `["node", "import"]`).
 
-### `suffixes`
+**Example:**
 
-Suffixes to check as fallbacks (default: `["/index"]`).
+```ts
+// "/app/src/index.ts"
+const src = resolveModuleURL("pkg-name", {
+  conditions: ["deno", "node", "import", "production"],
+});
+```
 
-> [!TIP]
-> Suffix fallbacks are skipped if the input ends with the same suffix.
->
-> For better performance, always use explicit `/index` when needed.
->
-> You can disable suffix fallbacks by setting `suffixes: []`.
+> [!NOTE]
+> Conditions are applied **without order**. The order is determined by the `exports` field in `package.json`.
 
 ### `extensions`
 
-Additional file extensions to check as fallbacks (default: `[".mjs", ".cjs", ".js", ".mts", ".cts", ".ts", ".json"]`).
+Additional file extensions to check as fallbacks.
+
+**Example:**
+
+```ts
+// "/app/src/index.ts"
+const src = resolveModulePath("./src/index", {
+  extensions: [".mjs", ".cjs", ".js", ".mts", ".cts", ".ts", ".json"],
+});
+```
+
+> [!NOTE]
+> Extension fallbacks are only checked if the input does not have an explicit extension.
 
 > [!TIP]
-> Extension fallbacks are only checked if the input does not have an explicit extension.
->
-> For better performance, ensure the input ends with an explicit extension.
->
-> You can disable extension fallbacks by setting `extensions: []`.
+> For better performance, use explicit extensions and avoid this option.
+
+### `suffixes`
+
+Additional path suffixes to check as fallbacks.
+
+**Example:**
+
+```ts
+// "/app/src/utils/index.ts"
+const src = resolveModulePath("./src/utils", {
+  suffixes: ["/index"],
+  extensions: [".mjs", ".cjs", ".js"],
+});
+```
+
+> [!NOTE]
+> Suffix fallbacks are skipped if the input ends with the same suffix.
+
+> [!TIP]
+> For better performance, use explicit `/index` when needed and avoid this option.
 
 ## Other Performance Tips
 
