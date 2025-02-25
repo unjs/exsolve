@@ -3,6 +3,8 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { describe, it, expect } from "vitest";
 import { resolveModuleURL, resolveModulePath } from "../src";
 
+const isWindows = process.platform === "win32";
+
 const tests = [
   // Resolve to path
   { input: "vitest", action: "resolves" },
@@ -69,6 +71,44 @@ describe("resolveModuleURL", () => {
     expect(resolveModuleURL("node:fs")).toBe("node:fs");
     expect(resolveModuleURL("fs")).toBe("node:fs");
     expect(resolveModuleURL("node:foo")).toBe("node:foo");
+  });
+
+  it.todo("handles missing subpath imports", () => {
+    const resolved = resolveModuleURL("#build/auth.js", {
+      from: import.meta.url,
+      try: true,
+    });
+    expect(resolved).toMatchInlineSnapshot();
+  });
+
+  it.todo("should resolve suffixes fully on windows", () => {
+    const res = resolveModuleURL(
+      fileURLToPath(new URL("fixture/foo", import.meta.url)),
+      {
+        from: import.meta.url,
+        suffixes: ["/index"],
+        extensions: [".mjs"],
+      },
+    );
+    expect(res).toMatch(/\.mjs$/);
+  });
+
+  describe.runIf(isWindows)("windows", () => {
+    it.todo("preserves casing", () => {
+      const DRIVE_LETTER_RE = /^\w(?=:)/;
+      const id = fileURLToPath(new URL("fixture/foo", import.meta.url));
+      const driveLetter = id.match(DRIVE_LETTER_RE)![0];
+      expect(driveLetter).toBe(driveLetter.toUpperCase());
+
+      const path = fileURLToPath(
+        resolveModuleURL(id, {
+          from: import.meta.url,
+        }),
+      );
+
+      const resolvedDriveLetter = path.match(DRIVE_LETTER_RE)![0];
+      expect(resolvedDriveLetter).toBe(driveLetter);
+    });
   });
 });
 
