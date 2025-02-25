@@ -244,6 +244,12 @@ export function resolveModulePath<O extends ResolveOptions>(
 }
 
 export function createResolver(defaults?: ResolverOptions) {
+  if (defaults?.from) {
+    defaults = {
+      ...defaults,
+      from: _normalizeResolveParents(defaults?.from),
+    };
+  }
   return {
     resolveModuleURL: <O extends ResolveOptions>(
       id: string | URL,
