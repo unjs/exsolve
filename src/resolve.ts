@@ -127,13 +127,18 @@ export function resolveModuleURL<Opts extends ResolveOptions>(
       break;
     }
     // Try other extensions and suffixes if not found
-    const extensionsToCheck =
-      extname(id) === "" ? options?.extensions || DEFAULT_EXTENSIONS : [""];
+    const hasExt = extname(id) !== "";
+    const extensionsToCheck = hasExt
+      ? []
+      : options?.extensions || DEFAULT_EXTENSIONS;
     for (const suffix of ["", ...(options?.suffixes || ["/index"])]) {
       if (suffix && id.endsWith(suffix)) {
         continue;
       }
-      for (const extension of extensionsToCheck) {
+      for (const extension of ["", ...extensionsToCheck]) {
+        if (!suffix && !extension) {
+          continue;
+        }
         resolved = _tryModuleResolve(
           `${id}${suffix}`.replace(/\/+/g, "/") + extension,
           url,
