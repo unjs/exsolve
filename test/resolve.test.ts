@@ -70,8 +70,8 @@ describe("resolveModuleURL", () => {
       from: import.meta.url,
       try: true,
     });
-    expect(resolved).toMatchInlineSnapshot()
-  })
+    expect(resolved).toMatchInlineSnapshot();
+  });
 
   it("resolves node built-ins", () => {
     expect(resolveModuleURL("node:fs")).toBe("node:fs");
