@@ -1,6 +1,23 @@
 # Changelog
 
 
+## v0.4.1
+
+[compare changes](https://github.com/unjs/exsolve/compare/v0.4.0...v0.4.1)
+
+### 🩹 Fixes
+
+- Always apply custom suffix ([211f0fc](https://github.com/unjs/exsolve/commit/211f0fc))
+
+### 📖 Documentation
+
+- Tiny typo ([#6](https://github.com/unjs/exsolve/pull/6))
+
+### ❤️ Contributors
+
+- Pooya Parsa ([@pi0](http://github.com/pi0))
+- @beer ([@iiio2](http://github.com/iiio2))
+
 ## v0.4.0
 
 [compare changes](https://github.com/unjs/exsolve/compare/v0.3.2...v0.4.0)
