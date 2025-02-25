@@ -137,10 +137,11 @@ export function resolveModuleURL<O extends ResolveOptions>(
     try {
       const stat = statSync(id);
       if (stat.isFile()) {
+        const url = pathToFileURL(id);
         if (cacheObj) {
-          cacheObj.set(cacheKey!, id);
+          cacheObj.set(cacheKey!, url);
         }
-        return id;
+        return url.href;
       }
     } catch (error: any) {
       if (error?.code !== "ENOENT") {
