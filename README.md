@@ -1,11 +1,8 @@
 # exsolve
 
-<!-- automd:badges color=yellow -->
-
 [![npm version](https://img.shields.io/npm/v/exsolve?color=yellow)](https://npmjs.com/package/exsolve)
 [![npm downloads](https://img.shields.io/npm/dm/exsolve?color=yellow)](https://npm.chart.dev/exsolve)
-
-<!-- /automd -->
+[![pkg size](https://img.shields.io/npm/unpacked-size/exsolve?color=yellow)](https://packagephobia.com/result?p=exsolve)
 
 > Module resolution utilities for Node.js (based on previous work in [unjs/mlly](https://github.com/unjs/mlly), [wooorm/import-meta-resolve](https://github.com/wooorm/import-meta-resolve), and the upstream [Node.js](https://github.com/nodejs/node) implementation).
 
