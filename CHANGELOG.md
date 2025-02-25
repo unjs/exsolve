@@ -1,6 +1,18 @@
 # Changelog
 
 
+## v0.3.1
+
+[compare changes](https://github.com/unjs/exsolve/compare/v0.3.0...v0.3.1)
+
+### 🩹 Fixes
+
+- Handle `try` when cache hits ([ec75a93](https://github.com/unjs/exsolve/commit/ec75a93))
+
+### ❤️ Contributors
+
+- Pooya Parsa ([@pi0](http://github.com/pi0))
+
 ## v0.3.0
 
 [compare changes](https://github.com/unjs/exsolve/compare/v0.2.0...v0.3.0)
