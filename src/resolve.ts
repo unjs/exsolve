@@ -120,6 +120,11 @@ export function resolveModuleURL<Opts extends ResolveOptions>(
   const urls: URL[] = _normalizeResolveParents(options?.from);
   let resolved: URL | undefined;
 
+  const extensionsToCheck =
+    extname(id) === "" /* has extension */
+      ? options?.extensions || DEFAULT_EXTENSIONS
+      : [];
+
   for (const url of urls) {
     // Try simple resolve
     resolved = _tryModuleResolve(id, url, conditionsSet);
@@ -127,10 +132,6 @@ export function resolveModuleURL<Opts extends ResolveOptions>(
       break;
     }
     // Try other extensions and suffixes if not found
-    const hasExt = extname(id) !== "";
-    const extensionsToCheck = hasExt
-      ? []
-      : options?.extensions || DEFAULT_EXTENSIONS;
     for (const suffix of ["", ...(options?.suffixes || ["/index"])]) {
       if (suffix && id.endsWith(suffix)) {
         continue;
@@ -163,7 +164,7 @@ export function resolveModuleURL<Opts extends ResolveOptions>(
       return undefined as any;
     }
     const error = new Error(
-      `Cannot resolve module "${id}".\nImported from:\n${urls.map((u) => ` - ${u}`).join("\n")}`,
+      `Cannot resolve module "${id}" (from: ${urls.map((u) => _fmtPath(u)).join(", ")})`,
     );
     // @ts-ignore
     error.code = "ERR_MODULE_NOT_FOUND";
@@ -238,5 +239,13 @@ function _normalizeResolveParent(input: unknown): URL | URL[] {
     return pathToFileURL(input);
   } catch {
     return [pathToFileURL(input + "/"), pathToFileURL(input)];
+  }
+}
+
+function _fmtPath(input: URL | string) {
+  try {
+    return fileURLToPath(input);
+  } catch {
+    return input;
   }
 }

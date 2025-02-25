@@ -92,7 +92,7 @@ describe("normalized parent urls", () => {
   const cannotResolveError = (id: string, urls: (string | URL)[]) =>
     Object.assign(
       new Error(
-        `Cannot resolve module "${id}".\nImported from:\n${urls.map((u) => ` - ${u}`).join("\n")}`,
+        `Cannot resolve module "${id}" (from: ${urls.map((u) => fileURLToPath(u)).join(", ")})`,
       ),
       { code: "ERR_MODULE_NOT_FOUND" },
     );
