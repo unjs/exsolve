@@ -159,6 +159,9 @@ export function resolveModuleURL<Opts extends ResolveOptions>(
 
   // Throw error if not found
   if (!resolved) {
+    if (options?.try) {
+      return undefined as any;
+    }
     const error = new Error(
       `Cannot resolve module "${id}".\nImported from:\n${urls.map((u) => ` - ${u}`).join("\n")}`,
     );
