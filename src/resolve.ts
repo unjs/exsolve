@@ -41,7 +41,7 @@ export type ResolveOptions = {
   cache?: boolean | Map<string, unknown>;
 
   /**
-   * Additional file extensions to check as fallbacks.
+   * Additional file extensions to check as fallback.
    * These are used only if the input does not have an explicit extension.
    * For better performance, use explicit extensions.
    */
@@ -55,8 +55,11 @@ export type ResolveOptions = {
   conditions?: string[];
 
   /**
-   * Additional path suffixes to check as fallbacks.
-   * Suffix fallbacks are skipped if the input ends with the same suffix.
+   * Path suffixes to check.
+   * Suffixes are skipped if the input ends with the same suffix.
+   *
+   * @example ["", "/index"]
+   *
    * For better performance, use explicit suffix like `/index` when needed.
    */
   suffixes?: string[];
@@ -162,26 +165,19 @@ export function resolveModuleURL<O extends ResolveOptions>(
   const urls: URL[] = _normalizeResolveParents(options?.from);
   let resolved: URL | undefined;
 
-  const extensionsToCheck = (extname(id) === "" /* no extension */ &&
-    options?.extensions) || [""];
+  const suffixesToCheck = options?.suffixes || [""];
 
-  const suffixesToCheck = ["", ...(options?.suffixes || [])];
+  const extensionsToCheck =
+    extname(id) === "" /* no extension */
+      ? ["", ...(options?.extensions || [])]
+      : [""];
 
   for (const url of urls) {
-    // Try simple resolve
-    resolved = _tryModuleResolve(id, url, conditionsSet);
-    if (resolved) {
-      break;
-    }
-    // Try other extensions and suffixes if not found
     for (const suffix of suffixesToCheck) {
       if (suffix && id.endsWith(suffix)) {
         continue;
       }
       for (const extension of extensionsToCheck) {
-        if (!suffix && !extension) {
-          continue;
-        }
         resolved = _tryModuleResolve(
           `${id}${suffix}`.replace(/\/+/g, "/") + extension,
           url,

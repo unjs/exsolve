@@ -21,7 +21,7 @@ const tests = [
 
 const extensions = [".mjs", ".cjs", ".js", ".mts", ".cts", ".ts", ".json"];
 
-const suffixes = ["/index"];
+const suffixes = ["", "/index"];
 
 describe("resolveModuleURL", () => {
   for (const test of tests) {

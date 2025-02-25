@@ -13,7 +13,7 @@ This library exposes an API similar to [`import.meta.resolve`](https://nodejs.or
 - Throws an error (or [try](#try)) if the resolved path does not exist in the filesystem.
 - Can override the default [conditions](#conditions).
 - Can resolve [from](#from) one or more parent URLs.
-- Can resolve with implicit `/index` [suffixes](#suffixes) as fallback.
+- Can resolve with custom [suffixes](#suffixes).
 - Can resolve with implicit [extensions](#extensions) as fallback.
 
 ## Usage
@@ -66,7 +66,7 @@ You can create a custom resolver instance with default [options](#resolve-option
 import { createResolver } from "exsolve";
 
 const { resolveModuleURL, resolveModulePath } = createResolver({
-  suffixes: ["/index"],
+  suffixes: ["", "/index"],
   extensions: [".mjs", ".cjs", ".js", ".mts", ".cts", ".ts", ".json"],
   conditions: ["node", "import", "production"],
 });
@@ -166,14 +166,14 @@ const src = resolveModulePath("./src/index", {
 
 ### `suffixes`
 
-Additional path suffixes to check as fallbacks.
+Path suffixes to check.
 
 **Example:**
 
 ```ts
 // "/app/src/utils/index.ts"
 const src = resolveModulePath("./src/utils", {
-  suffixes: ["/index"],
+  suffixes: ["", "/index"],
   extensions: [".mjs", ".cjs", ".js"],
 });
 ```
@@ -190,7 +190,7 @@ Resolve cache (enabled by default with a shared global object).
 
 Can be set to `false` to disable or a custom `Map` to bring your own cache object.
 
-See [cache](#cache) for more info.
+See [cache](#resolve-cache) for more info.
 
 ## Other Performance Tips
 
