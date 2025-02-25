@@ -1,6 +1,22 @@
 # Changelog
 
 
+## v0.2.0
+
+[compare changes](https://github.com/unjs/exsolve/compare/v0.1.4...v0.2.0)
+
+### 🔥 Performance
+
+- ⚠️  Remove default extra fallbacks ([6b8cd74](https://github.com/unjs/exsolve/commit/6b8cd74))
+
+#### ⚠️ Breaking Changes
+
+- ⚠️  Remove default extra fallbacks ([6b8cd74](https://github.com/unjs/exsolve/commit/6b8cd74))
+
+### ❤️ Contributors
+
+- Pooya Parsa ([@pi0](http://github.com/pi0))
+
 ## v0.1.4
 
 [compare changes](https://github.com/unjs/exsolve/compare/v0.1.3...v0.1.4)
