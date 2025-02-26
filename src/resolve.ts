@@ -121,11 +121,10 @@ export function resolveModuleURL<O extends ResolveOptions>(
   if (absolutePath) {
     try {
       if (statSync(absolutePath).isFile()) {
-        const resolvedUrl = _urlToString(url);
         if (cacheObj) {
-          cacheObj.set(cacheKey!, resolvedUrl);
+          cacheObj.set(cacheKey!, url.href);
         }
-        return resolvedUrl;
+        return url.href;
       }
     } catch (error: any) {
       if (error?.code !== "ENOENT") {
@@ -187,13 +186,11 @@ export function resolveModuleURL<O extends ResolveOptions>(
     throw error;
   }
 
-  const resolvedUrl = _urlToString(resolved);
-
   if (cacheObj) {
-    cacheObj.set(cacheKey!, resolvedUrl);
+    cacheObj.set(cacheKey!, resolved.href);
   }
 
-  return resolvedUrl;
+  return resolved.href;
 }
 
 /**
@@ -310,12 +307,6 @@ function _cacheKey(id: string, opts?: ResolveOptions) {
     opts?.from,
     opts?.suffixes,
   ]);
-}
-
-function _urlToString(url: URL): string {
-  return /^[a-z]:[\\/]/i.test(url.href)
-    ? pathToFileURL(url.href).href
-    : url.href;
 }
 
 function _join(a: string, b: string): string {
