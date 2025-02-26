@@ -94,7 +94,7 @@ describe("resolveModuleURL", () => {
   });
 
   describe.runIf(isWindows)("windows", () => {
-    it.todo("preserves casing", () => {
+    it("preserves casing", () => {
       const DRIVE_LETTER_RE = /^\w(?=:)/;
       const id = fileURLToPath(new URL("fixture/foo", import.meta.url));
       const driveLetter = id.match(DRIVE_LETTER_RE)![0];
@@ -103,6 +103,8 @@ describe("resolveModuleURL", () => {
       const path = fileURLToPath(
         resolveModuleURL(id, {
           from: import.meta.url,
+          suffixes: ["/index"],
+          extensions: [".mjs"],
         }),
       );
 
