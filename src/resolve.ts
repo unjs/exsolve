@@ -6,7 +6,7 @@ import { moduleResolve } from "./internal/resolve.ts";
 
 const DEFAULT_CONDITIONS_SET = /* #__PURE__ */ new Set(["node", "import"]);
 
-const isWindows = /* #__PURE__ */ (() => process.platform !== "win32")();
+const isWindows = /* #__PURE__ */ (() => process.platform === "win32")();
 
 const NOT_FOUND_ERRORS = /* #__PURE__ */ new Set([
   "ERR_MODULE_NOT_FOUND",
