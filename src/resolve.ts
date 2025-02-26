@@ -6,6 +6,8 @@ import { moduleResolve } from "./internal/resolve.ts";
 
 const DEFAULT_CONDITIONS_SET = /* #__PURE__ */ new Set(["node", "import"]);
 
+const isWindows = /* #__PURE__ */ (() => process.platform !== "win32")();
+
 const NOT_FOUND_ERRORS = /* #__PURE__ */ new Set([
   "ERR_MODULE_NOT_FOUND",
   "ERR_UNSUPPORTED_DIR_IMPORT",
@@ -207,9 +209,11 @@ export function resolveModulePath<O extends ResolveOptions>(
   options?: O,
 ): ResolveRes<O> {
   const resolved = resolveModuleURL(id, options);
-  return (
-    resolved ? _normalizeWinPath(fileURLToPath(resolved)) : undefined
-  ) as ResolveRes<O>;
+  if (!resolved) {
+    return undefined as ResolveRes<O>;
+  }
+  const absolutePath = fileURLToPath(resolved);
+  return isWindows ? _normalizeWinPath(absolutePath) : absolutePath;
 }
 
 export function createResolver(defaults?: ResolverOptions) {
@@ -319,10 +323,6 @@ function _join(a: string, b: string): string {
 }
 
 function _normalizeWinPath(path: string): string {
-  // Platform specific path normalization to reduce runtime overhead
-  if (process.platform !== "win32") {
-    return path;
-  }
   return path
     .replace(/\\/g, "/")
     .replace(/^[A-Za-z]:\//, (r) => r.toUpperCase());
