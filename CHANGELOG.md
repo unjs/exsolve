@@ -1,6 +1,34 @@
 # Changelog
 
 
+## v0.4.2
+
+[compare changes](https://github.com/unjs/exsolve/compare/v0.4.1...v0.4.2)
+
+### 🩹 Fixes
+
+- Resolve modules using full url ([#12](https://github.com/unjs/exsolve/pull/12))
+- Handle missing subpath as not found error ([80185bf](https://github.com/unjs/exsolve/commit/80185bf))
+
+### 💅 Refactors
+
+- Rework input normalization ([#11](https://github.com/unjs/exsolve/pull/11))
+- Remove windows workaround ([8a12c0f](https://github.com/unjs/exsolve/commit/8a12c0f))
+
+### 🏡 Chore
+
+- Update pnpm ([0d4acd3](https://github.com/unjs/exsolve/commit/0d4acd3))
+
+### ✅ Tests
+
+- Add regression tests (#8, #9, #10) ([#8](https://github.com/unjs/exsolve/issues/8), [#9](https://github.com/unjs/exsolve/issues/9), [#10](https://github.com/unjs/exsolve/issues/10))
+- Update windows test ([b4771c8](https://github.com/unjs/exsolve/commit/b4771c8))
+
+### ❤️ Contributors
+
+- Pooya Parsa ([@pi0](http://github.com/pi0))
+- Daniel Roe ([@danielroe](http://github.com/danielroe))
+
 ## v0.4.1
 
 [compare changes](https://github.com/unjs/exsolve/compare/v0.4.0...v0.4.1)
