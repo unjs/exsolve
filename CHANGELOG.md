@@ -1,6 +1,18 @@
 # Changelog
 
 
+## v0.4.4
+
+[compare changes](https://github.com/unjs/exsolve/compare/v0.4.3...v0.4.4)
+
+### 🚀 Enhancements
+
+- **resolveModulePath:** Normalize windows paths ([#14](https://github.com/unjs/exsolve/pull/14))
+
+### ❤️ Contributors
+
+- Pooya Parsa ([@pi0](http://github.com/pi0))
+
 ## v0.4.3
 
 [compare changes](https://github.com/unjs/exsolve/compare/v0.4.2...v0.4.3)
