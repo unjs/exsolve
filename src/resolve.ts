@@ -323,9 +323,7 @@ function _join(a: string, b: string): string {
 }
 
 function _normalizeWinPath(path: string): string {
-  return path
-    .replace(/\\/g, "/")
-    .replace(/^[a-z]:\//, (r) => r.toUpperCase());
+  return path.replace(/\\/g, "/").replace(/^[a-z]:\//, (r) => r.toUpperCase());
 }
 
 function _parseInput(
