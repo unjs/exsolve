@@ -207,7 +207,9 @@ export function resolveModulePath<O extends ResolveOptions>(
   options?: O,
 ): ResolveRes<O> {
   const resolved = resolveModuleURL(id, options);
-  return (resolved ? fileURLToPath(resolved) : undefined) as ResolveRes<O>;
+  return (
+    resolved ? _normalizeWinPath(fileURLToPath(resolved)) : undefined
+  ) as ResolveRes<O>;
 }
 
 export function createResolver(defaults?: ResolverOptions) {
@@ -314,6 +316,16 @@ function _join(a: string, b: string): string {
     return a;
   }
   return (a.endsWith("/") ? a : a + "/") + (b.startsWith("/") ? b.slice(1) : b);
+}
+
+function _normalizeWinPath(path: string): string {
+  // Platform specific path normalization to reduce runtime overhead
+  if (process.platform !== "win32") {
+    return path;
+  }
+  return path
+    .replace(/\\/g, "/")
+    .replace(/^[A-Za-z]:\//, (r) => r.toUpperCase());
 }
 
 function _parseInput(
