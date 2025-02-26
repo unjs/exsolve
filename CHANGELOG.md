@@ -1,6 +1,18 @@
 # Changelog
 
 
+## v1.0.0
+
+[compare changes](https://github.com/unjs/exsolve/compare/v0.4.4...v1.0.0)
+
+### 🏡 Chore
+
+- Simplify package.json ([49cfd75](https://github.com/unjs/exsolve/commit/49cfd75))
+
+### ❤️ Contributors
+
+- Pooya Parsa ([@pi0](http://github.com/pi0))
+
 ## v0.4.4
 
 [compare changes](https://github.com/unjs/exsolve/compare/v0.4.3...v0.4.4)
