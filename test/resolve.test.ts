@@ -81,7 +81,7 @@ describe("resolveModuleURL", () => {
     expect(resolved).toMatchInlineSnapshot();
   });
 
-  it.todo("should resolve suffixes fully on windows", () => {
+  it("should resolve suffixes to real file", () => {
     const res = resolveModuleURL(
       fileURLToPath(new URL("fixture/foo", import.meta.url)),
       {

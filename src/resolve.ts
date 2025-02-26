@@ -146,12 +146,12 @@ export function resolveModuleURL<O extends ResolveOptions>(
   const suffixes = options?.suffixes || [""];
   const extensions = options?.extensions ? ["", ...options.extensions] : [""];
   let resolved: URL | undefined;
-  for (const url of bases) {
+  for (const base of bases) {
     for (const suffix of suffixes) {
       for (const extension of extensions) {
         resolved = _tryModuleResolve(
-          _join(specifier || absolutePath, suffix) + extension,
-          url,
+          _join(specifier || url.href, suffix) + extension,
+          base,
           conditionsSet,
         );
         if (resolved) {
