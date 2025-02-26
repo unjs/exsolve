@@ -73,12 +73,12 @@ describe("resolveModuleURL", () => {
     expect(resolveModuleURL("node:foo")).toBe("node:foo");
   });
 
-  it.todo("handles missing subpath imports", () => {
+  it("handles missing subpath imports", () => {
     const resolved = resolveModuleURL("#build/auth.js", {
       from: import.meta.url,
       try: true,
     });
-    expect(resolved).toMatchInlineSnapshot();
+    expect(resolved).toBeUndefined();
   });
 
   it("should resolve suffixes to real file", () => {

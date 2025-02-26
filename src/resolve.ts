@@ -11,6 +11,7 @@ const NOT_FOUND_ERRORS = /* #__PURE__ */ new Set([
   "ERR_UNSUPPORTED_DIR_IMPORT",
   "MODULE_NOT_FOUND",
   "ERR_PACKAGE_PATH_NOT_EXPORTED",
+  "ERR_PACKAGE_IMPORT_NOT_DEFINED",
 ]);
 
 const globalCache = /* #__PURE__ */ (() =>
