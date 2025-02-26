@@ -313,7 +313,7 @@ function _join(a: string, b: string): string {
   if (!a || !b || b === "/") {
     return a;
   }
-  return a.replace(/\/$/, "") + "/" + b.replace(/^\//, "");
+  return (a.endsWith("/") ? a : a + "/") + (b.startsWith("/") ? b.slice(1) : b);
 }
 
 function _parseInput(
