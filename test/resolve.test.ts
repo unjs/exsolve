@@ -92,26 +92,6 @@ describe("resolveModuleURL", () => {
     );
     expect(res).toMatch(/\.mjs$/);
   });
-
-  describe.runIf(isWindows)("windows", () => {
-    it("preserves casing", () => {
-      const DRIVE_LETTER_RE = /^\w(?=:)/;
-      const id = fileURLToPath(new URL("fixture/foo", import.meta.url));
-      const driveLetter = id.match(DRIVE_LETTER_RE)![0];
-      expect(driveLetter).toBe(driveLetter.toUpperCase());
-
-      const path = fileURLToPath(
-        resolveModuleURL(id, {
-          from: import.meta.url,
-          suffixes: ["/index"],
-          extensions: [".mjs"],
-        }),
-      );
-
-      const resolvedDriveLetter = path.match(DRIVE_LETTER_RE)![0];
-      expect(resolvedDriveLetter).toBe(driveLetter);
-    });
-  });
 });
 
 describe("resolveModulePath", () => {
@@ -144,6 +124,25 @@ describe("resolveModulePath", () => {
       }
     });
   }
+});
+
+describe.runIf(isWindows)("windows", () => {
+  it("normalizes drive letter and slashes", () => {
+    for (const input of [
+      "./fixture/hello.mjs",
+      new URL("fixture/hello.mjs", import.meta.url),
+      new URL("fixture/hello.mjs", import.meta.url).href.toLowerCase(),
+    ]) {
+      const resolved = resolveModulePath(input, {
+        from: import.meta.url,
+      });
+      expect(resolved).to.not.include("\\");
+      expect(resolved).to.include("/");
+      const DRIVE_LETTER_RE = /^\w(?=:)/;
+      const resolvedDriveLetter = resolved.match(DRIVE_LETTER_RE)![0];
+      expect(resolvedDriveLetter).toBe(resolvedDriveLetter.toUpperCase());
+    }
+  });
 });
 
 describe("normalized parent urls", () => {
