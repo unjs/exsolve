@@ -128,16 +128,20 @@ describe("resolveModulePath", () => {
 
 describe.runIf(isWindows)("windows", () => {
   it("normalizes drive letter and slashes", () => {
-    const resolved = resolveModulePath("./fixture/hello.mjs", {
-      from: import.meta.url,
-    });
-
-    expect(resolved).to.not.include("\\");
-    expect(resolved).to.include("/");
-
-    const DRIVE_LETTER_RE = /^\w(?=:)/;
-    const resolvedDriveLetter = resolved.match(DRIVE_LETTER_RE)![0];
-    expect(resolvedDriveLetter).toBe(resolvedDriveLetter.toUpperCase());
+    for (const input of [
+      "./fixture/hello.mjs",
+      new URL("fixture/hello.mjs", import.meta.url),
+      new URL("fixture/hello.mjs", import.meta.url).href.toLowerCase(),
+    ]) {
+      const resolved = resolveModulePath(input, {
+        from: import.meta.url,
+      });
+      expect(resolved).to.not.include("\\");
+      expect(resolved).to.include("/");
+      const DRIVE_LETTER_RE = /^\w(?=:)/;
+      const resolvedDriveLetter = resolved.match(DRIVE_LETTER_RE)![0];
+      expect(resolvedDriveLetter).toBe(resolvedDriveLetter.toUpperCase());
+    }
   });
 });
 
