@@ -1,6 +1,18 @@
 # Changelog
 
 
+## v0.4.3
+
+[compare changes](https://github.com/unjs/exsolve/compare/v0.4.2...v0.4.3)
+
+### 🩹 Fixes
+
+- Ensure no `//` in joined paths ([#13](https://github.com/unjs/exsolve/pull/13))
+
+### ❤️ Contributors
+
+- Daniel Roe ([@danielroe](http://github.com/danielroe))
+
 ## v0.4.2
 
 [compare changes](https://github.com/unjs/exsolve/compare/v0.4.1...v0.4.2)
