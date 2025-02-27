@@ -1,6 +1,18 @@
 # Changelog
 
 
+## v1.0.1
+
+[compare changes](https://github.com/unjs/exsolve/compare/v1.0.0...v1.0.1)
+
+### 🩹 Fixes
+
+- **resolveModulePath:** Do not throw with try on non file:// result ([b61dea9](https://github.com/unjs/exsolve/commit/b61dea9))
+
+### ❤️ Contributors
+
+- Pooya Parsa ([@pi0](http://github.com/pi0))
+
 ## v1.0.0
 
 [compare changes](https://github.com/unjs/exsolve/compare/v0.4.4...v1.0.0)

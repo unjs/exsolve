@@ -1,6 +1,6 @@
 {
   "name": "exsolve",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Module resolution utilities based on Node.js upstream implementation.",
   "repository": "unjs/exsolve",
   "license": "MIT",
