@@ -212,6 +212,9 @@ export function resolveModulePath<O extends ResolveOptions>(
   if (!resolved) {
     return undefined as ResolveRes<O>;
   }
+  if (!resolved.startsWith("file://") && options?.try) {
+    return undefined as ResolveRes<O>;
+  }
   const absolutePath = fileURLToPath(resolved);
   return isWindows ? _normalizeWinPath(absolutePath) : absolutePath;
 }

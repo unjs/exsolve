@@ -124,6 +124,19 @@ describe("resolveModulePath", () => {
       }
     });
   }
+
+  it("throws error for built-ins", () => {
+    expect(() => resolveModulePath("fs")).toThrow();
+    expect(() => resolveModulePath("node:fs")).toThrow();
+  });
+
+  it("not throws error for built-ins when try", () => {
+    expect(() => resolveModulePath("fs", { try: true })).not.toThrow();
+    expect(() => resolveModulePath("node:fs", { try: true })).not.toThrow();
+
+    expect(resolveModulePath("fs", { try: true })).toBeUndefined();
+    expect(resolveModulePath("node:fs", { try: true })).toBeUndefined();
+  });
 });
 
 describe.runIf(isWindows)("windows", () => {
