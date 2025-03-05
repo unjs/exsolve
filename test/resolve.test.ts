@@ -1,6 +1,6 @@
 import { existsSync } from "node:fs";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { resolveModuleURL, resolveModulePath } from "../src";
 
 const isWindows = process.platform === "win32";
@@ -91,6 +91,20 @@ describe("resolveModuleURL", () => {
       },
     );
     expect(res).toMatch(/\.mjs$/);
+  });
+
+  it("resolve builtin modules", () => {
+    vi.mock("node:module", () => {
+      return {
+        builtinModules: ["fs", "path", "url", "http", "https", "bun:sqlite"],
+      };
+    });
+
+    expect(() => resolveModuleURL("unknown")).toThrowError();
+    expect(resolveModuleURL("node:fs")).toBe("node:fs");
+    expect(resolveModuleURL("fs")).toBe("node:fs");
+
+    expect(resolveModuleURL("bun:sqlite")).toBe("bun:sqlite");
   });
 });
 
