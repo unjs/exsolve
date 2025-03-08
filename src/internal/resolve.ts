@@ -11,7 +11,7 @@ import process from "node:process";
 import path from "node:path";
 import { statSync, realpathSync } from "node:fs";
 import { URL, fileURLToPath, pathToFileURL } from "node:url";
-import { builtinModules } from "node:module";
+import { nodeBuiltins } from "./builtins";
 
 import { defaultGetFormatWithoutErrors } from "./get-format.ts";
 import { getPackageScopeConfig, read } from "./package-json-reader.ts";
@@ -876,7 +876,7 @@ function packageResolve(
   base: URL,
   conditions: Set<string> | undefined,
 ): URL {
-  if (builtinModules.includes(specifier)) {
+  if (nodeBuiltins.includes(specifier)) {
     return new URL("node:" + specifier);
   }
 
@@ -1012,7 +1012,7 @@ export function moduleResolve(
       resolved = new URL(specifier);
     } catch (error_) {
       // Note: actual code uses `canBeRequiredWithoutScheme`.
-      if (isData && !builtinModules.includes(specifier)) {
+      if (isData && !nodeBuiltins.includes(specifier)) {
         // @ts-expect-error TODO: type issue
         const error = new ERR_UNSUPPORTED_RESOLVE_REQUEST(specifier, base);
         error.cause = error_;
