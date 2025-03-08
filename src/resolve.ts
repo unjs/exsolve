@@ -1,8 +1,8 @@
 import { statSync } from "node:fs";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { isAbsolute } from "node:path";
-import { builtinModules } from "node:module";
 import { moduleResolve } from "./internal/resolve.ts";
+import { nodeBuiltins } from "./internal/builtins.ts";
 
 const DEFAULT_CONDITIONS_SET = /* #__PURE__ */ new Set(["node", "import"]);
 
@@ -349,7 +349,7 @@ function _parseInput(
       return { external: input };
     }
 
-    if (builtinModules.includes(input) && !input.includes(":")) {
+    if (nodeBuiltins.includes(input) && !input.includes(":")) {
       return { external: `node:${input}` };
     }
 
