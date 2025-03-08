@@ -1,6 +1,18 @@
 # Changelog
 
 
+## v1.0.4
+
+[compare changes](https://github.com/unjs/exsolve/compare/v1.0.3...v1.0.4)
+
+### 🩹 Fixes
+
+- Use bundled `nodeBuiltins` for internal implementation ([#18](https://github.com/unjs/exsolve/pull/18))
+
+### ❤️ Contributors
+
+- Pooya Parsa ([@pi0](http://github.com/pi0))
+
 ## v1.0.3
 
 [compare changes](https://github.com/unjs/exsolve/compare/v1.0.2...v1.0.3)
