@@ -349,7 +349,7 @@ function _parseInput(
       return { external: input };
     }
 
-    if (nodeBuiltins.includes(input)) {
+    if (nodeBuiltins.includes(input) && !input.includes(":")) {
       return { external: `node:${input}` };
     }
 
