@@ -1,6 +1,18 @@
 # Changelog
 
 
+## v1.0.3
+
+[compare changes](https://github.com/unjs/exsolve/compare/v1.0.2...v1.0.3)
+
+### 🩹 Fixes
+
+- Keep a copy of node.js builtin modules ([#17](https://github.com/unjs/exsolve/pull/17))
+
+### ❤️ Contributors
+
+- Pooya Parsa ([@pi0](http://github.com/pi0))
+
 ## v1.0.1
 
 [compare changes](https://github.com/unjs/exsolve/compare/v1.0.0...v1.0.1)
