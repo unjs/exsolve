@@ -56,7 +56,7 @@ Differences between `resolveModuleURL` and `resolveModulePath`:
 - `resolveModulePath` returns an absolute path like `/app/dep.mjs`.
   - If the resolved URL does not use the `file://` scheme (e.g., `data:` or `node:`), it will throw an error.
 
-## Resolver with options
+## Resolver with Options
 
 You can create a custom resolver instance with default [options](#resolve-options) using `createResolver`.
 
@@ -72,7 +72,7 @@ const { resolveModuleURL, resolveModulePath } = createResolver({
 });
 ```
 
-## Resolve cache
+## Resolve Cache
 
 To speed up resolution, resolved values (and errors) are globally cached with a unique key based on id and options.
 
