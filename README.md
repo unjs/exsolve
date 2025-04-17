@@ -186,12 +186,6 @@ Can be set to `false` to disable or a custom `Map` to bring your own cache objec
 
 See [cache](#resolve-cache) for more info.
 
-### `preserveSymlinks`
-
-Keep symlinks instead of resolving them. By default, symlinks are resolved to their real paths.
-
-Can be set to `true` to disable symlink resolution.
-
 ## Other Performance Tips
 
 **Use explicit module extensions `.mjs` or `.cjs` instead of `.js`:**

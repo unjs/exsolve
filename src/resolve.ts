@@ -1,4 +1,4 @@
-import { realpathSync, statSync } from "node:fs";
+import { lstatSync, realpathSync, statSync } from "node:fs";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { isAbsolute } from "node:path";
 import { moduleResolve } from "./internal/resolve.ts";
@@ -66,12 +66,6 @@ export type ResolveOptions = {
    * the resolver returns `undefined` instead of throwing an error.
    */
   try?: boolean;
-
-  /**
-   * Keep symlinks instead of resolving them.
-   * Default behavior is to resolve symlinks to their real paths.
-   */
-  preserveSymlinks?: boolean;
 };
 
 export type ResolverOptions = Omit<ResolveOptions, "try">;
@@ -128,15 +122,14 @@ export function resolveModuleURL<O extends ResolveOptions>(
   // Absolute path to file (fast path)
   if (absolutePath) {
     try {
-      if (!options?.preserveSymlinks) {
-        const real = realpathSync(absolutePath);
-        if (real !== absolutePath) {
-          absolutePath = real;
-          url = pathToFileURL(real);
-        }
+      const stat = lstatSync(absolutePath);
+
+      if (stat.isSymbolicLink()) {
+        absolutePath = realpathSync(absolutePath);
+        url = pathToFileURL(absolutePath);
       }
 
-      if (statSync(absolutePath).isFile()) {
+      if (stat.isFile()) {
         if (cacheObj) {
           cacheObj.set(cacheKey!, url.href);
         }
