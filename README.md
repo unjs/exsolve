@@ -188,9 +188,9 @@ See [cache](#resolve-cache) for more info.
 
 ### `preserveSymlinks`
 
-Keep symlinks instead of resolving them. Default behavior is to resolve symlinks to their real paths.
+Keep symlinks instead of resolving them. By default, symlinks are resolved to their real paths.
 
-Can be set to `true` to disable resolving symlinks.
+Can be set to `true` to disable symlink resolution.
 
 ## Other Performance Tips
 
