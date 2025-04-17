@@ -129,8 +129,11 @@ export function resolveModuleURL<O extends ResolveOptions>(
   if (absolutePath) {
     try {
       if (!options?.preserveSymlinks) {
-        absolutePath = realpathSync(absolutePath);
-        url = pathToFileURL(absolutePath);
+        const real = realpathSync(absolutePath);
+        if (real !== absolutePath) {
+          absolutePath = real;
+          url = pathToFileURL(real);
+        }
       }
 
       if (statSync(absolutePath).isFile()) {
