@@ -72,7 +72,7 @@ describe("resolveModuleURL", () => {
       "./test/fixture/hello.link.mjs",
     );
     const resolved3 = resolveModuleURL(absolutePath);
-    expect(fileURLToPath(resolved3)).match(/fixture\/hello\.mjs$/);
+    expect(fileURLToPath(resolved3)).match(/fixture[/\\]hello\.mjs$/);
   });
 
   it("resolves node built-ints", () => {
