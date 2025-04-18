@@ -1,4 +1,4 @@
-import { statSync } from "node:fs";
+import { lstatSync, realpathSync, statSync } from "node:fs";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { isAbsolute } from "node:path";
 import { moduleResolve } from "./internal/resolve.ts";
@@ -92,8 +92,8 @@ export function resolveModuleURL<O extends ResolveOptions>(
   }
 
   const specifier = (parsedInput as { specifier: string }).specifier;
-  const url = (parsedInput as { url: URL }).url;
-  const absolutePath = (parsedInput as { absolutePath: string }).absolutePath;
+  let url = (parsedInput as { url: URL }).url;
+  let absolutePath = (parsedInput as { absolutePath: string }).absolutePath;
 
   // Check for cache
   let cacheKey: string | undefined;
@@ -122,7 +122,14 @@ export function resolveModuleURL<O extends ResolveOptions>(
   // Absolute path to file (fast path)
   if (absolutePath) {
     try {
-      if (statSync(absolutePath).isFile()) {
+      const stat = lstatSync(absolutePath);
+
+      if (stat.isSymbolicLink()) {
+        absolutePath = realpathSync(absolutePath);
+        url = pathToFileURL(absolutePath);
+      }
+
+      if (stat.isFile()) {
         if (cacheObj) {
           cacheObj.set(cacheKey!, url.href);
         }
