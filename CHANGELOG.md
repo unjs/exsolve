@@ -1,6 +1,28 @@
 # Changelog
 
 
+## v1.0.5
+
+[compare changes](https://github.com/unjs/exsolve/compare/v1.0.4...v1.0.5)
+
+### 🩹 Fixes
+
+- Resolve absolute symlinks to real paths ([#22](https://github.com/unjs/exsolve/pull/22))
+
+### 📖 Documentation
+
+- Capitalize titles ([#20](https://github.com/unjs/exsolve/pull/20))
+
+### 🏡 Chore
+
+- **release:** V1.0.4 ([dfff3e9](https://github.com/unjs/exsolve/commit/dfff3e9))
+
+### ❤️ Contributors
+
+- @beer ([@iiio2](https://github.com/iiio2))
+- Kricsleo ([@kricsleo](https://github.com/kricsleo))
+- Pooya Parsa ([@pi0](https://github.com/pi0))
+
 ## v1.0.4
 
 [compare changes](https://github.com/unjs/exsolve/compare/v1.0.3...v1.0.4)
