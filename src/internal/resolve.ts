@@ -47,10 +47,6 @@ const emittedPackageWarnings: Set<string> = new Set();
 
 const doubleSlashRegEx = /[/\\]{2}/;
 
-export function isURL(input: unknown): input is URL {
-  return input instanceof URL || input?.constructor?.name === "URL";
-}
-
 function emitInvalidSegmentDeprecation(
   target: string,
   request: string,

@@ -1,7 +1,7 @@
 import { lstatSync, realpathSync, statSync } from "node:fs";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { isAbsolute } from "node:path";
-import { isURL, moduleResolve } from "./internal/resolve.ts";
+import { moduleResolve } from "./internal/resolve.ts";
 import { nodeBuiltins } from "./internal/builtins.ts";
 
 const DEFAULT_CONDITIONS_SET = /* #__PURE__ */ new Set(["node", "import"]);
@@ -290,8 +290,8 @@ function _normalizeBase(input: unknown): URL | URL[] {
   }
 
   // Handle URL-like inputs (polyfills, etc)
-  if (isURL(input as unknown as URL)) {
-    return [input as URL];
+  if (_isURL(input)) {
+    return [input];
   }
 
   if (/^(?:node|data|http|https|file):/.test(input.toString())) {
@@ -341,15 +341,18 @@ function _normalizeWinPath(path: string): string {
   return path.replace(/\\/g, "/").replace(/^[a-z]:\//, (r) => r.toUpperCase());
 }
 
+function _isURL(input: unknown): input is URL {
+  return input instanceof URL || input?.constructor?.name === "URL";
+}
+
 function _parseInput(
   input: string | URL,
 ):
   | { url: URL; absolutePath: string }
   | { external: string }
   | { specifier: string } {
-  // URL-like inputs (polyfills, etc)
-  if (isURL(input as unknown as URL)) {
-    if ((input as URL).protocol === "file:") {
+  if (_isURL(input)) {
+    if (input.protocol === "file:") {
       return { url: input as URL, absolutePath: fileURLToPath(input as URL) };
     }
     return { external: (input as URL).href };
