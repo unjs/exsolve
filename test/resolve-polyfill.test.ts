@@ -1,3 +1,5 @@
+// @vitest-environment happy-dom
+
 import { existsSync } from "node:fs";
 import { resolve as nodeResolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
