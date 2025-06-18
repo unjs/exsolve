@@ -347,13 +347,6 @@ function _parseInput(
   | { url: URL; absolutePath: string }
   | { external: string }
   | { specifier: string } {
-  if (_isURL(input)) {
-    if (input.protocol === "file:") {
-      return { url: input as URL, absolutePath: fileURLToPath(input as URL) };
-    }
-    return { external: (input as URL).href };
-  }
-
   if (typeof input === "string") {
     if (input.startsWith("file:")) {
       const url = new URL(input);
@@ -373,6 +366,13 @@ function _parseInput(
     }
 
     return { specifier: input };
+  }
+
+  if (_isURL(input)) {
+    if (input.protocol === "file:") {
+      return { url: input, absolutePath: fileURLToPath(input) };
+    }
+    return { external: input.href };
   }
 
   throw new TypeError("id must be a `string` or `URL`");
