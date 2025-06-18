@@ -338,7 +338,7 @@ function _normalizeWinPath(path: string): string {
 }
 
 function _isURL(input: unknown): input is URL {
-  return input instanceof URL || input?.constructor?.name === "URL";
+  return input instanceof URL || input?.constructor?.name === "URL" /* #25 */;
 }
 
 function _parseInput(
