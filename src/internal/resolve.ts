@@ -47,6 +47,10 @@ const emittedPackageWarnings: Set<string> = new Set();
 
 const doubleSlashRegEx = /[/\\]{2}/;
 
+export function isURL(input: { href: string } | URL): boolean {
+  return !!input.href || input instanceof URL;
+}
+
 function emitInvalidSegmentDeprecation(
   target: string,
   request: string,

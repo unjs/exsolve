@@ -1,7 +1,7 @@
 import { lstatSync, realpathSync, statSync } from "node:fs";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { isAbsolute } from "node:path";
-import { moduleResolve } from "./internal/resolve.ts";
+import { isURL, moduleResolve } from "./internal/resolve.ts";
 import { nodeBuiltins } from "./internal/builtins.ts";
 
 const DEFAULT_CONDITIONS_SET = /* #__PURE__ */ new Set(["node", "import"]);
@@ -290,7 +290,7 @@ function _normalizeBase(input: unknown): URL | URL[] {
   }
 
   // Handle URL-like inputs (polyfills, etc)
-  if (input instanceof URL || (input as unknown as URL).href) {
+  if (isURL(input as unknown as URL)) {
     return [input as URL];
   }
 
@@ -348,7 +348,7 @@ function _parseInput(
   | { external: string }
   | { specifier: string } {
   // URL-like inputs (polyfills, etc)
-  if (input instanceof URL || (input as unknown as URL).href) {
+  if (isURL(input as unknown as URL)) {
     if ((input as URL).protocol === "file:") {
       return { url: input as URL, absolutePath: fileURLToPath(input as URL) };
     }
