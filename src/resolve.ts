@@ -288,7 +288,7 @@ function _normalizeBase(input: unknown): URL | URL[] {
   if (!input) {
     return [];
   }
-  if (input instanceof URL) {
+  if (_isURL(input)) {
     return [input];
   }
   if (typeof input !== "string") {
@@ -297,6 +297,7 @@ function _normalizeBase(input: unknown): URL | URL[] {
   if (/^(?:node|data|http|https|file):/.test(input)) {
     return new URL(input);
   }
+
   try {
     if (input.endsWith("/") || statSync(input).isDirectory()) {
       return pathToFileURL(input + "/");
@@ -336,6 +337,10 @@ function _normalizeWinPath(path: string): string {
   return path.replace(/\\/g, "/").replace(/^[a-z]:\//, (r) => r.toUpperCase());
 }
 
+function _isURL(input: unknown): input is URL {
+  return input instanceof URL || input?.constructor?.name === "URL" /* #25 */;
+}
+
 function _parseInput(
   input: string | URL,
 ):
@@ -363,7 +368,7 @@ function _parseInput(
     return { specifier: input };
   }
 
-  if (input instanceof URL) {
+  if (_isURL(input)) {
     if (input.protocol === "file:") {
       return { url: input, absolutePath: fileURLToPath(input) };
     }
