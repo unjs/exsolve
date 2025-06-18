@@ -289,17 +289,16 @@ function _normalizeBase(input: unknown): URL | URL[] {
     return [];
   }
 
-  // Handle URL-like inputs (polyfills, etc)
   if (_isURL(input)) {
     return [input];
   }
 
-  if (/^(?:node|data|http|https|file):/.test(input.toString())) {
-    return new URL(input.toString());
-  }
-
   if (typeof input !== "string") {
     return [];
+  }
+
+  if (/^(?:node|data|http|https|file):/.test(input.toString())) {
+    return new URL(input.toString());
   }
 
   try {
