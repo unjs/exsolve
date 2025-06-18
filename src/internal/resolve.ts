@@ -47,7 +47,7 @@ const emittedPackageWarnings: Set<string> = new Set();
 
 const doubleSlashRegEx = /[/\\]{2}/;
 
-export function isURL(input: { href: string } | URL): boolean {
+export function isURL(input: unknown): input is URL {
   return !!input.href || input instanceof URL;
 }
 
