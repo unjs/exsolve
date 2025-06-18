@@ -288,15 +288,20 @@ function _normalizeBase(input: unknown): URL | URL[] {
   if (!input) {
     return [];
   }
-  if (input instanceof URL) {
-    return [input];
+
+  // Handle URL-like inputs (polyfills, etc)
+  if (input instanceof URL || (input as unknown as URL).href) {
+    return [input as URL];
   }
+
+  if (/^(?:node|data|http|https|file):/.test(input.toString())) {
+    return new URL(input.toString());
+  }
+
   if (typeof input !== "string") {
     return [];
   }
-  if (/^(?:node|data|http|https|file):/.test(input)) {
-    return new URL(input);
-  }
+
   try {
     if (input.endsWith("/") || statSync(input).isDirectory()) {
       return pathToFileURL(input + "/");
@@ -342,6 +347,14 @@ function _parseInput(
   | { url: URL; absolutePath: string }
   | { external: string }
   | { specifier: string } {
+  // URL-like inputs (polyfills, etc)
+  if (input instanceof URL || (input as unknown as URL).href) {
+    if ((input as URL).protocol === "file:") {
+      return { url: input as URL, absolutePath: fileURLToPath(input as URL) };
+    }
+    return { external: (input as URL).href };
+  }
+
   if (typeof input === "string") {
     if (input.startsWith("file:")) {
       const url = new URL(input);
@@ -361,13 +374,6 @@ function _parseInput(
     }
 
     return { specifier: input };
-  }
-
-  if (input instanceof URL) {
-    if (input.protocol === "file:") {
-      return { url: input, absolutePath: fileURLToPath(input) };
-    }
-    return { external: input.href };
   }
 
   throw new TypeError("id must be a `string` or `URL`");
