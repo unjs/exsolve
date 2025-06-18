@@ -1,5 +1,7 @@
 // @vitest-environment happy-dom
 
+// https://github.com/unjs/exsolve/pull/25
+
 import { existsSync } from "node:fs";
 import { resolve as nodeResolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
