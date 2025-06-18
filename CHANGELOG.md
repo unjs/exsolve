@@ -1,6 +1,23 @@
 # Changelog
 
 
+## v1.0.6
+
+[compare changes](https://github.com/unjs/exsolve/compare/v1.0.5...v1.0.6)
+
+### 🩹 Fixes
+
+- Support URL polyfills ([#25](https://github.com/unjs/exsolve/pull/25))
+
+### 🏡 Chore
+
+- Update deps ([9874db5](https://github.com/unjs/exsolve/commit/9874db5))
+
+### ❤️ Contributors
+
+- Pooya Parsa ([@pi0](https://github.com/pi0))
+- Jess ([@JessicaSachs](https://github.com/JessicaSachs))
+
 ## v1.0.5
 
 [compare changes](https://github.com/unjs/exsolve/compare/v1.0.4...v1.0.5)
