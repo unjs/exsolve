@@ -294,8 +294,8 @@ function _normalizeBase(input: unknown): URL | URL[] {
   if (typeof input !== "string") {
     return [];
   }
-  if (/^(?:node|data|http|https|file):/.test(input.toString())) {
-    return new URL(input.toString());
+  if (/^(?:node|data|http|https|file):/.test(input)) {
+    return new URL(input);
   }
 
   try {
