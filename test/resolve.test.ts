@@ -101,6 +101,24 @@ describe("resolveModuleURL", () => {
     expect(res).toMatch(/\.mjs$/);
   });
 
+  it("should resolve `.` with empty suffix", () => {
+    const res = resolveModuleURL(".", {
+      from: new URL("fixture/foo/", import.meta.url).href,
+      suffixes: [""],
+      extensions: [".txt"],
+    });
+    expect(res).toMatch(/\.\.txt$/);
+  });
+
+  it("should resolve `.` with empty and additional suffixes", () => {
+    const res = resolveModuleURL(".", {
+      from: new URL("fixture/foo/", import.meta.url).href,
+      suffixes: ["", "/index"],
+      extensions: [".mjs"],
+    });
+    expect(res).toMatch(/index\.mjs$/);
+  });
+
   it("resolve builtin modules", () => {
     vi.mock("node:module", () => {
       return {
