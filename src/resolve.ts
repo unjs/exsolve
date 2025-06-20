@@ -151,18 +151,19 @@ export function resolveModuleURL<O extends ResolveOptions>(
     : DEFAULT_CONDITIONS_SET;
 
   // Search through bases
+  const target = specifier || url.href;
   const bases: URL[] = _normalizeBases(options?.from);
   const suffixes = options?.suffixes || [""];
   const extensions = options?.extensions ? ["", ...options.extensions] : [""];
   let resolved: URL | undefined;
   for (const base of bases) {
     for (const suffix of suffixes) {
+      let name = _join(target, suffix);
+      if (name === ".") {
+        name += "/.";
+      }
       for (const extension of extensions) {
-        resolved = _tryModuleResolve(
-          _join(specifier || url.href, suffix) + extension,
-          base,
-          conditionsSet,
-        );
+        resolved = _tryModuleResolve(name + extension, base, conditionsSet);
         if (resolved) {
           break;
         }
