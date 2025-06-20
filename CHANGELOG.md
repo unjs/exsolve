@@ -1,6 +1,18 @@
 # Changelog
 
 
+## v1.0.7
+
+[compare changes](https://github.com/unjs/exsolve/compare/v1.0.6...v1.0.7)
+
+### 🩹 Fixes
+
+- Resolve `.` with empty suffix ([#26](https://github.com/unjs/exsolve/pull/26))
+
+### ❤️ Contributors
+
+- Balázs Németh ([@zsilbi](https://github.com/zsilbi))
+
 ## v1.0.6
 
 [compare changes](https://github.com/unjs/exsolve/compare/v1.0.5...v1.0.6)
