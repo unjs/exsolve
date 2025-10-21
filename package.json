@@ -32,7 +32,7 @@
     "changelogen": "^0.6.1",
     "eslint": "^9.29.0",
     "eslint-config-unjs": "^0.4.2",
-    "happy-dom": "^18.0.1",
+    "happy-dom": "^20.0.0",
     "jiti": "^2.4.2",
     "prettier": "^3.5.3",
     "typescript": "^5.8.3",

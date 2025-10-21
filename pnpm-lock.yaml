@@ -13,7 +13,7 @@ importers:
         version: 24.0.3
       '@vitest/coverage-v8':
         specifier: ^3.2.4
-        version: 3.2.4(vitest@3.2.4(@types/node@24.0.3)(happy-dom@18.0.1)(jiti@2.4.2)(jsdom@26.1.0)(yaml@2.7.0))
+        version: 3.2.4(vitest@3.2.4(@types/node@24.0.3)(happy-dom@20.0.7)(jiti@2.4.2)(jsdom@26.1.0)(yaml@2.7.0))
       automd:
         specifier: ^0.4.0
         version: 0.4.0(magicast@0.3.5)
@@ -27,8 +27,8 @@ importers:
         specifier: ^0.4.2
         version: 0.4.2(eslint@9.29.0(jiti@2.4.2))(typescript@5.8.3)
       happy-dom:
-        specifier: ^18.0.1
-        version: 18.0.1
+        specifier: ^20.0.0
+        version: 20.0.7
       jiti:
         specifier: ^2.4.2
         version: 2.4.2
@@ -43,7 +43,7 @@ importers:
         version: 3.5.0(typescript@5.8.3)
       vitest:
         specifier: ^3.2.4
-        version: 3.2.4(@types/node@24.0.3)(happy-dom@18.0.1)(jiti@2.4.2)(jsdom@26.1.0)(yaml@2.7.0)
+        version: 3.2.4(@types/node@24.0.3)(happy-dom@20.0.7)(jiti@2.4.2)(jsdom@26.1.0)(yaml@2.7.0)
 
 packages:
 
@@ -1098,6 +1098,7 @@ packages:
   eslint-plugin-markdown@5.1.0:
     resolution: {integrity: sha512-SJeyKko1K6GwI0AN6xeCDToXDkfKZfXcexA6B+O2Wr2btUS9GrC+YgwSyVli5DJnctUHjFXcQ2cqTaAmVoLi2A==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
+    deprecated: Please use @eslint/markdown instead
     peerDependencies:
       eslint: '>=8'
 
@@ -1258,8 +1259,8 @@ packages:
   graphemer@1.4.0:
     resolution: {integrity: sha512-EtKwoO6kxCL9WO5xipiHTZlSzBm7WLT627TqC/uVRd0HKmq8NXyebnNYxDoBi7wt8eTWrUrKXCOVaFq9x1kgag==}
 
-  happy-dom@18.0.1:
-    resolution: {integrity: sha512-qn+rKOW7KWpVTtgIUi6RVmTBZJSe2k0Db0vh1f7CWrWclkkc7/Q+FrOfkZIb2eiErLyqu5AXEzE7XthO9JVxRA==}
+  happy-dom@20.0.7:
+    resolution: {integrity: sha512-CywLfzmYxP5OYpuAG0usFY0CpxJtwYR+w8Mms5J8W29Y2Pzf6rbfQS2M523tRZTb0oLA+URopPtnAQX2fupHZQ==}
     engines: {node: '>=20.0.0'}
 
   has-flag@4.0.0:
@@ -2867,7 +2868,7 @@ snapshots:
       '@typescript-eslint/types': 8.34.1
       eslint-visitor-keys: 4.2.1
 
-  '@vitest/coverage-v8@3.2.4(vitest@3.2.4(@types/node@24.0.3)(happy-dom@18.0.1)(jiti@2.4.2)(jsdom@26.1.0)(yaml@2.7.0))':
+  '@vitest/coverage-v8@3.2.4(vitest@3.2.4(@types/node@24.0.3)(happy-dom@20.0.7)(jiti@2.4.2)(jsdom@26.1.0)(yaml@2.7.0))':
     dependencies:
       '@ampproject/remapping': 2.3.0
       '@bcoe/v8-coverage': 1.0.2
@@ -2882,7 +2883,7 @@ snapshots:
       std-env: 3.9.0
       test-exclude: 7.0.1
       tinyrainbow: 2.0.0
-      vitest: 3.2.4(@types/node@24.0.3)(happy-dom@18.0.1)(jiti@2.4.2)(jsdom@26.1.0)(yaml@2.7.0)
+      vitest: 3.2.4(@types/node@24.0.3)(happy-dom@20.0.7)(jiti@2.4.2)(jsdom@26.1.0)(yaml@2.7.0)
     transitivePeerDependencies:
       - supports-color
 
@@ -3551,7 +3552,7 @@ snapshots:
 
   graphemer@1.4.0: {}
 
-  happy-dom@18.0.1:
+  happy-dom@20.0.7:
     dependencies:
       '@types/node': 20.19.1
       '@types/whatwg-mimetype': 3.0.2
@@ -4531,7 +4532,7 @@ snapshots:
       jiti: 2.4.2
       yaml: 2.7.0
 
-  vitest@3.2.4(@types/node@24.0.3)(happy-dom@18.0.1)(jiti@2.4.2)(jsdom@26.1.0)(yaml@2.7.0):
+  vitest@3.2.4(@types/node@24.0.3)(happy-dom@20.0.7)(jiti@2.4.2)(jsdom@26.1.0)(yaml@2.7.0):
     dependencies:
       '@types/chai': 5.2.2
       '@vitest/expect': 3.2.4
@@ -4558,7 +4559,7 @@ snapshots:
       why-is-node-running: 2.3.0
     optionalDependencies:
       '@types/node': 24.0.3
-      happy-dom: 18.0.1
+      happy-dom: 20.0.7
       jsdom: 26.1.0
     transitivePeerDependencies:
       - jiti
