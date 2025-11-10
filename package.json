@@ -7,8 +7,7 @@
   "sideEffects": false,
   "type": "module",
   "exports": {
-    "types": "./dist/index.d.mts",
-    "default": "./dist/index.mjs"
+    ".": "./dist/index.mjs"
   },
   "types": "./dist/index.d.mts",
   "files": [
@@ -18,8 +17,8 @@
     "build": "obuild",
     "dev": "vitest dev",
     "lint": "eslint . && prettier -c .",
-    "node-ts": "node --disable-warning=ExperimentalWarning --experimental-strip-types",
     "lint:fix": "automd && eslint . --fix && prettier -w .",
+    "node-ts": "node --disable-warning=ExperimentalWarning --experimental-strip-types",
     "prepack": "pnpm build",
     "release": "pnpm test && changelogen --release && npm publish && git push --follow-tags",
     "test": "pnpm lint && pnpm test:types && vitest run --coverage",
