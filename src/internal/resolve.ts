@@ -1023,7 +1023,7 @@ export function moduleResolve(
     }
   }
 
-  assert(resolved !== undefined, "expected to be defined");
+  assert.ok(resolved !== undefined, "expected to be defined");
 
   if (resolved.protocol !== "file:") {
     return resolved;
