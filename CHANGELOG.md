@@ -1,6 +1,29 @@
 # Changelog
 
 
+## v1.0.8
+
+[compare changes](https://github.com/unjs/exsolve/compare/v1.0.7...v1.0.8)
+
+### 🩹 Fixes
+
+- Always ignore errors in try mode ([9e38594](https://github.com/unjs/exsolve/commit/9e38594))
+
+### 📦 Build
+
+- Migrate to rolldown/obuild ([7eae7ee](https://github.com/unjs/exsolve/commit/7eae7ee))
+- Simplify `exports` field ([04b7043](https://github.com/unjs/exsolve/commit/04b7043))
+
+### 🏡 Chore
+
+- **release:** V1.0.7 ([b031f76](https://github.com/unjs/exsolve/commit/b031f76))
+- Update deps ([ac2745d](https://github.com/unjs/exsolve/commit/ac2745d))
+- Lint ([3f178be](https://github.com/unjs/exsolve/commit/3f178be))
+
+### ❤️ Contributors
+
+- Pooya Parsa ([@pi0](https://github.com/pi0))
+
 ## v1.0.7
 
 [compare changes](https://github.com/unjs/exsolve/compare/v1.0.6...v1.0.7)
