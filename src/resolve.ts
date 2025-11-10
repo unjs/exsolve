@@ -8,14 +8,6 @@ const DEFAULT_CONDITIONS_SET = /* #__PURE__ */ new Set(["node", "import"]);
 
 const isWindows = /* #__PURE__ */ (() => process.platform === "win32")();
 
-const NOT_FOUND_ERRORS = /* #__PURE__ */ new Set([
-  "ERR_MODULE_NOT_FOUND",
-  "ERR_UNSUPPORTED_DIR_IMPORT",
-  "MODULE_NOT_FOUND",
-  "ERR_PACKAGE_PATH_NOT_EXPORTED",
-  "ERR_PACKAGE_IMPORT_NOT_DEFINED",
-]);
-
 const globalCache = /* #__PURE__ */ (() =>
   // eslint-disable-next-line unicorn/no-unreadable-iife
   ((globalThis as any)["__EXSOLVE_CACHE__"] ||= new Map()))() as Map<
@@ -268,10 +260,8 @@ function _tryModuleResolve(
 ): URL | undefined {
   try {
     return moduleResolve(specifier, base, conditions);
-  } catch (error: any) {
-    if (!NOT_FOUND_ERRORS.has(error?.code)) {
-      throw error;
-    }
+  } catch {
+    // ignore
   }
 }
 

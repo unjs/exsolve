@@ -177,6 +177,11 @@ describe("resolveModulePath", () => {
     expect(resolveModulePath("fs", { try: true })).toBeUndefined();
     expect(resolveModulePath("node:fs", { try: true })).toBeUndefined();
   });
+
+  it("not throws error for invalid input when try", () => {
+    expect(() => resolveModulePath(".foo", { try: true })).not.toThrow();
+    expect(resolveModulePath(".foo", { try: true })).toBeUndefined();
+  });
 });
 
 describe.runIf(isWindows)("windows", () => {
