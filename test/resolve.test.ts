@@ -197,6 +197,36 @@ describe("resolve cache", () => {
     expect(conditions).toEqual(["node", "import"]);
   });
 
+  it("treats conditions as an unordered set", () => {
+    const cache = new Map<string, unknown>();
+    const conditions = ["development", "node", "import"];
+    const options = {
+      cache,
+      from: import.meta.url,
+      try: true,
+    } as const;
+
+    resolveModuleURL("missing-cache-entry", {
+      ...options,
+      conditions,
+    });
+    conditions.reverse();
+    resolveModuleURL("missing-cache-entry", {
+      ...options,
+      conditions,
+    });
+
+    expect(cache).toHaveLength(1);
+
+    conditions[0] = "production";
+    resolveModuleURL("missing-cache-entry", {
+      ...options,
+      conditions,
+    });
+
+    expect(cache).toHaveLength(2);
+  });
+
   it("separates bases and suffixes", () => {
     const cache = new Map<string, unknown>();
     const fixture = new URL("fixture/", import.meta.url);
