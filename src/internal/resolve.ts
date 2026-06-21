@@ -56,7 +56,6 @@ function emitInvalidSegmentDeprecation(
   base: URL,
   isTarget: boolean,
 ) {
-  // @ts-expect-error: apparently it does exist, TS.
   if (process.noDeprecation) {
     return;
   }
@@ -85,7 +84,6 @@ function emitLegacyIndexDeprecation(
   base: URL,
   main?: string,
 ): void {
-  // @ts-expect-error: apparently it does exist, TS.
   if (process.noDeprecation) {
     return;
   }
@@ -607,7 +605,6 @@ function emitTrailingSlashPatternDeprecation(
   pjsonUrl: URL,
   base: URL,
 ) {
-  // @ts-expect-error: apparently it does exist, TS.
   if (process.noDeprecation) {
     return;
   }
