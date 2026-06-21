@@ -15,6 +15,7 @@
     "allowImportingTsExtensions": true,
     // "isolatedDeclarations": true,
     // "declaration": true,
-    "noEmit": true
+    "noEmit": true,
+    "types": ["node"]
   }
 }
