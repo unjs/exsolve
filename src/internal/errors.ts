@@ -1,7 +1,6 @@
 // Source:  https://github.com/nodejs/node/blob/main/lib/internal/errors.js
-// Changes: https://github.com/nodejs/node/commits/main/lib/internal/errors.js?since=2024-04-29
+// Changes: https://github.com/nodejs/node/commits/main/lib/internal/errors.js?since=2026-06-21
 
-import v8 from "node:v8";
 import assert from "node:assert";
 import { format, inspect } from "node:util";
 
@@ -15,8 +14,6 @@ export type ErrnoExceptionFields = {
 
 export type ErrnoException = Error & ErrnoExceptionFields;
 export type MessageFunction = (...parameters: Array<any>) => string;
-
-const own = {}.hasOwnProperty;
 
 const classRegExp = /^([A-Z][a-z\d]*)+$/;
 
@@ -36,10 +33,6 @@ const kTypes = new Set([
 
 const messages: Map<string, MessageFunction | string> = new Map();
 
-const nodeInternalPrefix = "__node_internal_";
-
-let userStackTraceLimit: number;
-
 /**
  * Create a list string in the form like 'A and B' or 'A, B, ..., and Z'.
  * We cannot use Intl.ListFormat because it's not available in
@@ -52,9 +45,33 @@ let userStackTraceLimit: number;
  * @returns {string}
  */
 function formatList(array: string[], type = "and"): string {
-  return array.length < 3
-    ? array.join(` ${type} `)
-    : `${array.slice(0, -1).join(", ")}, ${type} ${array.at(-1)}`;
+  switch (array.length) {
+    case 0: {
+      return "";
+    }
+    case 1: {
+      return `${array[0]}`;
+    }
+    case 2: {
+      return `${array[0]} ${type} ${array[1]}`;
+    }
+    case 3: {
+      return `${array[0]}, ${array[1]}, ${type} ${array[2]}`;
+    }
+    default: {
+      return `${array.slice(0, -1).join(", ")}, ${type} ${array.at(-1)}`;
+    }
+  }
+}
+
+/**
+ * Count the number of `%`-style placeholders in a static message string.
+ */
+function getExpectedArgumentLength(message: string): number {
+  let expectedLength = 0;
+  const regex = /%[dfijoOs]/g;
+  while (regex.exec(message) !== null) expectedLength++;
+  return expectedLength;
 }
 
 /**
@@ -68,8 +85,12 @@ function createError<
   value: T,
   constructor: C,
 ): T extends string
-  ? C
-  : { new (...args: Parameters<Exclude<T, string>>): InstanceType<C> } {
+  ? { new (...args: unknown[]): InstanceType<C> & ErrnoException }
+  : {
+      new (
+        ...args: Parameters<Exclude<T, string>>
+      ): InstanceType<C> & ErrnoException;
+    } {
   // Special case for SystemError that formats the error message differently
   // The SystemErrors only have SystemError as their base classes.
   messages.set(sym, value);
@@ -77,93 +98,104 @@ function createError<
   return makeNodeErrorWithCode(constructor, sym) as any;
 }
 
+// Used to identify Node.js core errors created via `makeNodeErrorWithCode`.
+const kIsNodeError = Symbol("kIsNodeError");
+
 function makeNodeErrorWithCode(
   Base: ErrorConstructor,
   key: string,
 ): ErrorConstructor {
-  // @ts-expect-error It’s a Node error.
-  return function NodeError(...parameters: unknown[]) {
-    const limit = Error.stackTraceLimit;
-    if (isErrorStackTraceLimitWritable()) Error.stackTraceLimit = 0;
-    const error = new Base();
-    // Reset the limit and setting the name property.
-    if (isErrorStackTraceLimitWritable()) Error.stackTraceLimit = limit;
-    const message = getMessage(key, parameters, error);
-    Object.defineProperties(error, {
-      // Note: no need to implement `kIsNodeError` symbol, would be hard,
-      // probably.
-      message: {
-        value: message,
-        enumerable: false,
-        writable: true,
-        configurable: true,
-      },
-      toString: {
-        /** @this {Error} */
-        value() {
+  const message = messages.get(key);
+  const expectedLength =
+    typeof message === "string" ? getExpectedArgumentLength(message) : -1;
+
+  switch (expectedLength) {
+    case 0: {
+      class NodeError extends Base {
+        code = key;
+
+        constructor(...args: unknown[]) {
+          assert.ok(
+            args.length === 0,
+            `Code: ${key}; The provided arguments length (${args.length}) does not ` +
+              `match the required ones (${expectedLength}).`,
+          );
+          super(message as string);
+        }
+
+        override get ["constructor"](): ErrorConstructor {
+          return Base;
+        }
+
+        get [kIsNodeError](): boolean {
+          return true;
+        }
+
+        override toString(): string {
           return `${this.name} [${key}]: ${this.message}`;
-        },
-        enumerable: false,
-        writable: true,
-        configurable: true,
-      },
-    });
-
-    captureLargerStackTrace(error);
-    // @ts-expect-error It’s a Node error.
-    error.code = key;
-    return error;
-  };
-}
-
-function isErrorStackTraceLimitWritable(): boolean {
-  // Do no touch Error.stackTraceLimit as V8 would attempt to install
-  // it again during deserialization.
-  try {
-    if (v8.startupSnapshot.isBuildingSnapshot()) {
-      return false;
+        }
+      }
+      return NodeError as unknown as ErrorConstructor;
     }
-  } catch {
-    // ignore
-  }
+    case -1: {
+      class NodeError extends Base {
+        code = key;
 
-  const desc = Object.getOwnPropertyDescriptor(Error, "stackTraceLimit");
-  if (desc === undefined) {
-    return Object.isExtensible(Error);
-  }
+        constructor(...args: unknown[]) {
+          super();
+          Object.defineProperty(this, "message", {
+            value: getMessage(key, args, this),
+            enumerable: false,
+            writable: true,
+            configurable: true,
+          });
+        }
 
-  return own.call(desc, "writable") && desc.writable !== undefined
-    ? desc.writable
-    : desc.set !== undefined;
+        override get ["constructor"](): ErrorConstructor {
+          return Base;
+        }
+
+        get [kIsNodeError](): boolean {
+          return true;
+        }
+
+        override toString(): string {
+          return `${this.name} [${key}]: ${this.message}`;
+        }
+      }
+      return NodeError as unknown as ErrorConstructor;
+    }
+    default: {
+      class NodeError extends Base {
+        code = key;
+
+        constructor(...args: unknown[]) {
+          assert.ok(
+            args.length === expectedLength,
+            `Code: ${key}; The provided arguments length (${args.length}) does not ` +
+              `match the required ones (${expectedLength}).`,
+          );
+
+          args.unshift(message as string);
+          super(Reflect.apply(format, null, args) as string);
+        }
+
+        override get ["constructor"](): ErrorConstructor {
+          return Base;
+        }
+
+        get [kIsNodeError](): boolean {
+          return true;
+        }
+
+        override toString(): string {
+          return `${this.name} [${key}]: ${this.message}`;
+        }
+      }
+      return NodeError as unknown as ErrorConstructor;
+    }
+  }
 }
-
-/**
- * This function removes unnecessary frames from Node.js core errors.
- */
-function hideStackFrames<T extends (...parameters: unknown[]) => unknown>(
-  wrappedFunction: T,
-): T {
-  // We rename the functions that will be hidden to cut off the stacktrace
-  // at the outermost one
-  const hidden = nodeInternalPrefix + wrappedFunction.name;
-  Object.defineProperty(wrappedFunction, "name", { value: hidden });
-  return wrappedFunction;
-}
-
-const captureLargerStackTrace = hideStackFrames(function (error: unknown) {
-  const stackTraceLimitIsWritable = isErrorStackTraceLimitWritable();
-  if (stackTraceLimitIsWritable) {
-    userStackTraceLimit = Error.stackTraceLimit;
-    Error.stackTraceLimit = Number.POSITIVE_INFINITY;
-  }
-
-  Error.captureStackTrace(error as Error);
-
-  // Reset the limit
-  if (stackTraceLimitIsWritable) Error.stackTraceLimit = userStackTraceLimit;
-
-  return error;
-});
 
 function getMessage(key: string, parameters: unknown[], self: Error): string {
   const message = messages.get(key);
@@ -178,9 +210,7 @@ function getMessage(key: string, parameters: unknown[], self: Error): string {
     return Reflect.apply(message, self, parameters);
   }
 
-  const regex = /%[dfijoOs]/g;
-  let expectedLength = 0;
-  while (regex.exec(message) !== null) expectedLength++;
+  const expectedLength = getExpectedArgumentLength(message);
   assert.ok(
     expectedLength === parameters.length,
     `Code: ${key}; The provided arguments length (${parameters.length}) does not ` +
@@ -197,29 +227,66 @@ function getMessage(key: string, parameters: unknown[], self: Error): string {
  * Determine the specific type of a value for type-mismatch errors.
  */
 function determineSpecificType(value: unknown): string {
-  if (value === null || value === undefined) {
-    return String(value);
+  if (value === null) {
+    return "null";
+  } else if (value === undefined) {
+    return "undefined";
   }
 
-  if (typeof value === "function" && value.name) {
-    return `function ${value.name}`;
-  }
+  const type = typeof value;
 
-  if (typeof value === "object") {
-    if (value.constructor && value.constructor.name) {
-      return `an instance of ${value.constructor.name}`;
+  switch (type) {
+    case "bigint": {
+      return `type bigint (${value}n)`;
     }
+    case "number": {
+      if (value === 0) {
+        return 1 / (value as number) === Number.NEGATIVE_INFINITY
+          ? "type number (-0)"
+          : "type number (0)";
+      } else if (value !== value) {
+        return "type number (NaN)";
+      } else if (value === Number.POSITIVE_INFINITY) {
+        return "type number (Infinity)";
+      } else if (value === Number.NEGATIVE_INFINITY) {
+        return "type number (-Infinity)";
+      }
+      return `type number (${value})`;
+    }
+    case "boolean": {
+      return value ? "type boolean (true)" : "type boolean (false)";
+    }
+    case "symbol": {
+      return `type symbol (${String(value)})`;
+    }
+    case "function": {
+      return `function ${(value as () => void).name}`;
+    }
+    case "object": {
+      if (value.constructor && "name" in value.constructor) {
+        return `an instance of ${value.constructor.name}`;
+      }
+      return `${inspect(value, { depth: -1 })}`;
+    }
+    case "string": {
+      let string = value as string;
+      if (string.length > 28) {
+        string = `${string.slice(0, 25)}...`;
+      }
+      if (!string.includes("'")) {
+        return `type string ('${string}')`;
+      }
+      return `type string (${JSON.stringify(string)})`;
+    }
+    default: {
+      let inspected = inspect(value, { colors: false });
+      if (inspected.length > 28) {
+        inspected = `${inspected.slice(0, 25)}...`;
+      }
 
-    return `${inspect(value, { depth: -1 })}`;
+      return `type ${type} (${inspected})`;
+    }
   }
-
-  let inspected = inspect(value, { colors: false });
-
-  if (inspected.length > 28) {
-    inspected = `${inspected.slice(0, 25)}...`;
-  }
-
-  return `type ${typeof value} (${inspected})`;
 }
 
 // ----------------------------------------------------------------------------
@@ -273,7 +340,7 @@ export const ERR_INVALID_ARG_TYPE = createError(
     if (instances.length > 0) {
       const pos = types.indexOf("object");
       if (pos !== -1) {
-        types.slice(pos, 1);
+        types.splice(pos, 1);
         instances.push("Object");
       }
     }
@@ -369,17 +436,19 @@ export const ERR_INVALID_PACKAGE_TARGET = createError(
 
 export const ERR_MODULE_NOT_FOUND = createError(
   "ERR_MODULE_NOT_FOUND",
-  (path: string, base: string, exactUrl: boolean = false) => {
+  function (
+    this: ErrnoException,
+    path: string,
+    base: string,
+    exactUrl: boolean | string = false,
+  ) {
+    if (exactUrl && typeof exactUrl === "string") {
+      this.url = `${exactUrl}`;
+    }
     return `Cannot find ${
       exactUrl ? "module" : "package"
     } '${path}' imported from ${base}`;
   },
-  Error,
-);
-
-export const ERR_NETWORK_IMPORT_DISALLOWED = createError(
-  "ERR_NETWORK_IMPORT_DISALLOWED",
-  "import of '%s' by %s is not supported: %s",
   Error,
 );
 
@@ -414,8 +483,18 @@ export const ERR_PACKAGE_PATH_NOT_EXPORTED = createError(
 
 export const ERR_UNSUPPORTED_DIR_IMPORT = createError(
   "ERR_UNSUPPORTED_DIR_IMPORT",
-  "Directory import '%s' is not supported " +
-    "resolving ES modules imported from %s",
+  function (
+    this: ErrnoException,
+    path: string,
+    base: string,
+    exactUrl: string | undefined = undefined,
+  ) {
+    this.url = exactUrl;
+    return (
+      `Directory import '${path}' is not supported ` +
+      `resolving ES modules imported from ${base}`
+    );
+  },
   Error,
 );
 
@@ -427,6 +506,9 @@ export const ERR_UNSUPPORTED_RESOLVE_REQUEST = createError(
 
 export const ERR_UNKNOWN_FILE_EXTENSION = createError(
   "ERR_UNKNOWN_FILE_EXTENSION",
+  // Upstream: 'Unknown file extension "%s" for %s' (static string).
+  // Kept as a typed function to preserve the typed 2-arg call signature used
+  // by `get-format.ts`; the produced message is identical to upstream.
   (extension: string, path: string) => {
     return `Unknown file extension "${extension}" for ${path}`;
   },

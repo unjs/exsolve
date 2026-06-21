@@ -228,9 +228,8 @@ function finalizeResolution(
   );
 
   if (stats && stats.isDirectory()) {
-    // @ts-expect-error TODO: type issue
     const error = new ERR_UNSUPPORTED_DIR_IMPORT(filePath, fileURLToPath(base));
-    // @ts-expect-error Add this for `import.meta.resolve`.
+    // Add this for `import.meta.resolve`.
     error.url = String(resolved);
     throw error;
   }
@@ -241,7 +240,7 @@ function finalizeResolution(
       base && fileURLToPath(base),
       true,
     );
-    // @ts-expect-error Add this for `import.meta.resolve`.
+    // Add this for `import.meta.resolve`.
     error.url = String(resolved);
     throw error;
   }
@@ -454,7 +453,7 @@ function resolvePackageTarget(
   internal: boolean,
   isPathMap: boolean,
   conditions: Set<string> | undefined,
-): URL | null {
+): URL | null | undefined {
   if (typeof target === "string") {
     return resolvePackageTargetString(
       target,
@@ -478,7 +477,7 @@ function resolvePackageTarget(
 
     while (++i < targetList.length) {
       const targetItem = targetList[i];
-      let resolveResult: URL | null;
+      let resolveResult: URL | null | undefined;
       try {
         resolveResult = resolvePackageTarget(
           packageJsonUrl,
@@ -509,7 +508,7 @@ function resolvePackageTarget(
     }
 
     if (lastException === undefined || lastException === null) {
-      return null;
+      return lastException;
     }
 
     throw lastException;
@@ -553,7 +552,7 @@ function resolvePackageTarget(
       }
     }
 
-    return null;
+    return undefined;
   }
 
   if (target === null) {
@@ -748,7 +747,7 @@ function packageImportsResolve(
   base: URL,
   conditions?: Set<string>,
 ): URL {
-  if (name === "#" || name.startsWith("#/") || name.endsWith("/")) {
+  if (name === "#" || name.endsWith("/")) {
     const reason = "is not a valid internal imports specifier name";
     throw new ERR_INVALID_MODULE_SPECIFIER(name, reason, fileURLToPath(base));
   }
@@ -997,7 +996,6 @@ export function moduleResolve(
     try {
       resolved = new URL(specifier, base);
     } catch (error_) {
-      // @ts-expect-error TODO: type issue
       const error = new ERR_UNSUPPORTED_RESOLVE_REQUEST(specifier, base);
       error.cause = error_;
       throw error;
@@ -1010,7 +1008,6 @@ export function moduleResolve(
     } catch (error_) {
       // Note: actual code uses `canBeRequiredWithoutScheme`.
       if (isData && !nodeBuiltins.includes(specifier)) {
-        // @ts-expect-error TODO: type issue
         const error = new ERR_UNSUPPORTED_RESOLVE_REQUEST(specifier, base);
         error.cause = error_;
         throw error;
