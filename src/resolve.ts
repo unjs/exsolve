@@ -4,7 +4,8 @@ import { isAbsolute } from "node:path";
 import { moduleResolve } from "./internal/resolve.ts";
 import { nodeBuiltins } from "./internal/builtins.ts";
 
-const DEFAULT_CONDITIONS_SET = /* #__PURE__ */ new Set(["node", "import"]);
+const DEFAULT_CONDITIONS = ["node", "import"];
+const DEFAULT_CONDITIONS_SET = /* #__PURE__ */ new Set(DEFAULT_CONDITIONS);
 
 const isWindows = /* #__PURE__ */ (() => process.platform === "win32")();
 
@@ -14,6 +15,20 @@ const globalCache = /* #__PURE__ */ (() =>
   string,
   unknown
 >;
+
+type CacheValue = string | Error;
+
+type CacheEntry = {
+  id: string;
+  conditions: unknown[];
+  extensions?: unknown[];
+  from?: {
+    array: boolean;
+    values: unknown[];
+  };
+  suffixes?: unknown[];
+  value: CacheValue;
+};
 
 /**
  * Options to configure module resolution.
@@ -86,12 +101,13 @@ export function resolveModuleURL<O extends ResolveOptions>(
   const specifier = (parsedInput as { specifier: string }).specifier;
   let url = (parsedInput as { url: URL }).url;
   let absolutePath = (parsedInput as { absolutePath: string }).absolutePath;
+  const cacheId = absolutePath || specifier;
 
   // Check for cache
   let cacheKey: string | undefined;
   let cacheObj: Map<string, unknown> | undefined;
   if (options?.cache !== false) {
-    cacheKey = _cacheKey(absolutePath || specifier, options);
+    cacheKey = _cacheKey(cacheId, options);
     cacheObj =
       options?.cache && typeof options?.cache === "object"
         ? options.cache
@@ -99,7 +115,7 @@ export function resolveModuleURL<O extends ResolveOptions>(
   }
 
   if (cacheObj) {
-    const cached = cacheObj.get(cacheKey!);
+    const cached = _getCacheValue(cacheObj, cacheKey!, cacheId, options);
     if (typeof cached === "string") {
       return cached;
     }
@@ -123,14 +139,14 @@ export function resolveModuleURL<O extends ResolveOptions>(
 
       if (stat.isFile()) {
         if (cacheObj) {
-          cacheObj.set(cacheKey!, url.href);
+          _setCacheValue(cacheObj, cacheKey!, cacheId, options, url.href);
         }
         return url.href;
       }
     } catch (error: any) {
       if (error?.code !== "ENOENT") {
         if (cacheObj) {
-          cacheObj.set(cacheKey!, error);
+          _setCacheValue(cacheObj, cacheKey!, cacheId, options, error);
         }
         throw error;
       }
@@ -178,7 +194,7 @@ export function resolveModuleURL<O extends ResolveOptions>(
     error.code = "ERR_MODULE_NOT_FOUND";
 
     if (cacheObj) {
-      cacheObj.set(cacheKey!, error);
+      _setCacheValue(cacheObj, cacheKey!, cacheId, options, error);
     }
 
     if (options?.try) {
@@ -189,7 +205,7 @@ export function resolveModuleURL<O extends ResolveOptions>(
   }
 
   if (cacheObj) {
-    cacheObj.set(cacheKey!, resolved.href);
+    _setCacheValue(cacheObj, cacheKey!, cacheId, options, resolved.href);
   }
 
   return resolved.href;
@@ -307,14 +323,135 @@ function _fmtPath(input: URL | string) {
   }
 }
 
-function _cacheKey(id: string, opts?: ResolveOptions) {
-  return JSON.stringify([
-    id,
-    (opts?.conditions || ["node", "import"]).sort(),
-    opts?.extensions,
-    opts?.from,
-    opts?.suffixes,
-  ]);
+// Avoid serializing options on warm lookups. Exact snapshots in each hash
+// bucket ensure that collisions cannot return a result for different options.
+function _cacheKey(id: string, options?: ResolveOptions) {
+  let hash = _hashValue(2_166_136_261, id);
+  hash = _hashArray(hash, options?.conditions || DEFAULT_CONDITIONS);
+  hash = _hashArray(hash, options?.extensions);
+  hash = _hashArray(hash, _fromArray(options?.from));
+  hash = _hashArray(hash, options?.suffixes);
+  return `\0exsolve:v2:${hash >>> 0}`;
+}
+
+function _getCacheValue(
+  cache: Map<string, unknown>,
+  key: string,
+  id: string,
+  options?: ResolveOptions,
+): CacheValue | undefined {
+  const entries = cache.get(key);
+  if (!Array.isArray(entries)) {
+    return;
+  }
+  for (const entry of entries as CacheEntry[]) {
+    if (entry.id === id && _sameCacheOptions(entry, options)) {
+      return entry.value;
+    }
+  }
+}
+
+function _setCacheValue(
+  cache: Map<string, unknown>,
+  key: string,
+  id: string,
+  options: ResolveOptions | undefined,
+  value: CacheValue,
+) {
+  const cached = cache.get(key);
+  const entries: CacheEntry[] = Array.isArray(cached) ? cached : [];
+  const entry = entries.find(
+    (entry) => entry.id === id && _sameCacheOptions(entry, options),
+  );
+  if (entry) {
+    entry.value = value;
+  } else {
+    entries.push({
+      id,
+      conditions: _snapshotArray(options?.conditions || DEFAULT_CONDITIONS)!,
+      extensions: _snapshotArray(options?.extensions),
+      from:
+        options?.from === undefined
+          ? undefined
+          : {
+              array: Array.isArray(options.from),
+              values: _snapshotArray(_fromArray(options.from))!,
+            },
+      suffixes: _snapshotArray(options?.suffixes),
+      value,
+    });
+  }
+  cache.set(key, entries);
+}
+
+function _sameCacheOptions(entry: CacheEntry, options?: ResolveOptions) {
+  return (
+    _sameArray(entry.conditions, options?.conditions || DEFAULT_CONDITIONS) &&
+    _sameArray(entry.extensions, options?.extensions) &&
+    _sameFrom(entry.from, options?.from) &&
+    _sameArray(entry.suffixes, options?.suffixes)
+  );
+}
+
+function _sameArray(a?: unknown[], b?: unknown[]) {
+  if (!a || !b) {
+    return a === b;
+  }
+  if (a.length !== b.length) {
+    return false;
+  }
+  for (const [index, value] of a.entries()) {
+    if (value !== _cacheValue(b[index])) {
+      return false;
+    }
+  }
+  return true;
+}
+
+function _sameFrom(cached?: CacheEntry["from"], from?: ResolveOptions["from"]) {
+  if (!cached || from === undefined) {
+    return !cached && from === undefined;
+  }
+  if (cached.array !== Array.isArray(from)) {
+    return false;
+  }
+  return _sameArray(cached.values, Array.isArray(from) ? from : [from]);
+}
+
+function _snapshotArray(values?: unknown[]) {
+  return values?.map(_cacheValue);
+}
+
+function _fromArray(from?: ResolveOptions["from"]) {
+  if (Array.isArray(from) || from === undefined) {
+    return from;
+  }
+  return [from];
+}
+
+function _cacheValue(value: unknown) {
+  return _isURL(value) ? value.href : value;
+}
+
+function _hashArray(hash: number, values?: unknown[]) {
+  hash = Math.imul(hash ^ (values ? values.length + 1 : 0), 16_777_619);
+  if (!values) {
+    return hash;
+  }
+  for (const value of values) {
+    hash = _hashValue(hash, value);
+  }
+  return hash;
+}
+
+function _hashValue(hash: number, value: unknown) {
+  const cached = _cacheValue(value);
+  const string = typeof cached === "string" ? cached : String(cached);
+  hash = Math.imul(hash ^ string.length, 16_777_619);
+  for (let index = 0; index < string.length; index++) {
+    hash = Math.imul(hash ^ string.codePointAt(index)!, 16_777_619);
+  }
+  return hash;
 }
 
 function _join(a: string, b: string): string {

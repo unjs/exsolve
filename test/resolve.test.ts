@@ -184,6 +184,59 @@ describe("resolveModulePath", () => {
   });
 });
 
+describe("resolve cache", () => {
+  it("does not mutate conditions", () => {
+    const conditions = ["node", "import"];
+    Object.freeze(conditions);
+    expect(
+      resolveModuleURL("vitest", {
+        from: import.meta.url,
+        conditions,
+      }),
+    ).toMatch(/vitest/);
+    expect(conditions).toEqual(["node", "import"]);
+  });
+
+  it("separates bases and suffixes", () => {
+    const cache = new Map<string, unknown>();
+    const fixture = new URL("fixture/", import.meta.url);
+
+    expect(
+      resolveModuleURL("./hello", {
+        cache,
+        extensions: [".mjs"],
+        from: fixture,
+      }),
+    ).toMatch(/hello\.mjs$/);
+    expect(
+      resolveModuleURL("./hello", {
+        cache,
+        extensions: [".mjs"],
+        from: import.meta.url,
+        try: true,
+      }),
+    ).toBeUndefined();
+
+    expect(
+      resolveModuleURL("./foo", {
+        cache,
+        extensions: [".mjs"],
+        from: fixture,
+        suffixes: ["/index"],
+      }),
+    ).toMatch(/foo\/index\.mjs$/);
+    expect(
+      resolveModuleURL("./foo", {
+        cache,
+        extensions: [".mjs"],
+        from: fixture,
+        suffixes: [""],
+        try: true,
+      }),
+    ).toBeUndefined();
+  });
+});
+
 describe.runIf(isWindows)("windows", () => {
   it("normalizes drive letter and slashes", () => {
     for (const input of [
