@@ -5,6 +5,7 @@ import { moduleResolve } from "./internal/resolve.ts";
 import { nodeBuiltins } from "./internal/builtins.ts";
 
 const DEFAULT_CONDITIONS_SET = /* #__PURE__ */ new Set(["node", "import"]);
+const DEFAULT_CONDITIONS_KEY = "2:6:import4:node";
 
 const isWindows = /* #__PURE__ */ (() => process.platform === "win32")();
 
@@ -307,14 +308,42 @@ function _fmtPath(input: URL | string) {
   }
 }
 
-function _cacheKey(id: string, opts?: ResolveOptions) {
-  return JSON.stringify([
-    id,
-    (opts?.conditions || ["node", "import"]).sort(),
-    opts?.extensions,
-    opts?.from,
-    opts?.suffixes,
-  ]);
+function _cacheKey(id: string, options?: ResolveOptions) {
+  let from: (string | URL)[] | undefined;
+  if (Array.isArray(options?.from)) {
+    from = options.from;
+  } else if (options?.from) {
+    from = [options.from];
+  }
+  return (
+    _cacheKeyValues([id]) +
+    _conditionsKey(options?.conditions) +
+    _cacheKeyValues(options?.extensions) +
+    _cacheKeyValues(from) +
+    _cacheKeyValues(options?.suffixes)
+  );
+}
+
+function _conditionsKey(conditions?: string[]) {
+  if (!conditions) {
+    return DEFAULT_CONDITIONS_KEY;
+  }
+  return _cacheKeyValues([...new Set(conditions)].sort());
+}
+
+function _cacheKeyValues(
+  values: readonly (string | URL)[] | undefined,
+): string {
+  if (!values) {
+    return "-";
+  }
+
+  let key = `${values.length}:`;
+  for (const value of values) {
+    const stringValue = String(value);
+    key += `${stringValue.length}:${stringValue}`;
+  }
+  return key;
 }
 
 function _join(a: string, b: string): string {
