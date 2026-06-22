@@ -244,7 +244,7 @@ function determineSpecificType(value: unknown): string {
         return 1 / (value as number) === Number.NEGATIVE_INFINITY
           ? "type number (-0)"
           : "type number (0)";
-      } else if (value !== value) {
+      } else if (Number.isNaN(value)) {
         return "type number (NaN)";
       } else if (value === Number.POSITIVE_INFINITY) {
         return "type number (Infinity)";
@@ -263,7 +263,7 @@ function determineSpecificType(value: unknown): string {
       return `function ${(value as () => void).name}`;
     }
     case "object": {
-      if (value.constructor && "name" in value.constructor) {
+      if (value.constructor && value.constructor.name) {
         return `an instance of ${value.constructor.name}`;
       }
       return `${inspect(value, { depth: -1 })}`;
