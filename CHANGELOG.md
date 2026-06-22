@@ -1,6 +1,30 @@
 # Changelog
 
 
+## v1.1.0
+
+[compare changes](https://github.com/unjs/exsolve/compare/v1.0.8...v1.1.0)
+
+### 🚀 Enhancements
+
+- Sync internal with latest Node.js upstream ([#49](https://github.com/unjs/exsolve/pull/49))
+
+### 🔥 Performance
+
+- Optimize resolver cache lookups ([#48](https://github.com/unjs/exsolve/pull/48))
+
+### 🏡 Chore
+
+- Update deps ([43c20e3](https://github.com/unjs/exsolve/commit/43c20e3))
+- Apply automated updates ([15806be](https://github.com/unjs/exsolve/commit/15806be))
+- Fix ts issues ([3177a7e](https://github.com/unjs/exsolve/commit/3177a7e))
+
+### ❤️ Contributors
+
+- Pi0x <x@pi0.io>
+- Alexander Lichter ([@TheAlexLichter](https://github.com/TheAlexLichter))
+- Pooya Parsa ([@pi0](https://github.com/pi0))
+
 ## v1.0.8
 
 [compare changes](https://github.com/unjs/exsolve/compare/v1.0.7...v1.0.8)
