@@ -1,10 +1,19 @@
 import { describe, it, expect } from "vitest";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { pathToFileURL } from "node:url";
 import { defaultGetFormatWithoutErrors } from "../src/internal/get-format.ts";
 
 const context = { parentURL: import.meta.url };
 
 const getFormat = (url: string) =>
   defaultGetFormatWithoutErrors(new URL(url), context);
+
+// A valid, absolute file: URL on every platform (Windows needs a drive letter,
+// so a hard-coded `file:///tmp/...` would throw in `fileURLToPath`). The temp
+// dir also has no `type` package.json in its ancestry, so extensionless files
+// fall back to "commonjs".
+const tmpFileURL = (name: string) => pathToFileURL(join(tmpdir(), name)).href;
 
 describe("defaultGetFormatWithoutErrors", () => {
   describe("data: protocol (mime mapping + regex anchoring)", () => {
@@ -84,9 +93,9 @@ describe("defaultGetFormatWithoutErrors", () => {
     // A leading-dot file like `.foobar`: extname() sees the `.` is preceded by
     // a SLASH, so it returns "" (no extension). That routes to the
     // extensionless branch; with no `type` in the controlling package.json
-    // (none found walking up from /tmp), it falls back to "commonjs".
+    // (none found walking up from the temp dir), it falls back to "commonjs".
     it("treats a dotfile as extensionless (commonjs)", () => {
-      expect(getFormat("file:///tmp/.foobar")).toBe("commonjs");
+      expect(getFormat(tmpFileURL(".foobar"))).toBe("commonjs");
     });
 
     // A trailing dot: extname() returns ".", which is not in the map → null.
