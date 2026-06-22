@@ -1,0 +1,7 @@
+{
+  "name": "imports-pkg",
+  "imports": {
+    "#/*": "./src/*",
+    "#internal": "./internal.js"
+  }
+}

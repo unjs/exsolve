@@ -1,6 +1,13 @@
 /*
- * Extracted from Node.js v22.14.0
+ * Extracted from Node.js v24.16.0 (`require('node:module').builtinModules`).
  * For some reason, Bun decided to extend "node:modules" with bun specific modules which makes it unreliable source.
+ *
+ * Note: This list intentionally contains only modules that are requirable WITHOUT
+ * the `node:` prefix (used to map a bare specifier like `fs` to `node:fs`).
+ * The `node:`-prefix-only modules added in recent Node releases
+ * (`node:sea`, `node:sqlite`, `node:test`, `node:test/reporters`) are deliberately
+ * excluded: their bare forms (e.g. `sqlite`) do not resolve in Node, and `node:`
+ * prefixed specifiers are already handled before this list is consulted.
  */
 // prettier-ignore
 export const nodeBuiltins = [

@@ -1,0 +1,11 @@
+{
+  "name": "exports-pkg",
+  "exports": {
+    ".": {
+      "import": {
+        "worker": "./worker.js"
+      },
+      "default": "./default.js"
+    }
+  }
+}

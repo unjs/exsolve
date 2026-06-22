@@ -1,5 +1,5 @@
 // Source:  https://github.com/nodejs/node/blob/main/lib/internal/modules/esm/get_format.js
-// Changes: https://github.com/nodejs/node/commits/main/lib/internal/modules/esm/get_format.js?since=2025-02-24
+// Changes: https://github.com/nodejs/node/commits/main/lib/internal/modules/esm/get_format.js?since=2026-06-21
 
 import { fileURLToPath } from "node:url";
 import { getPackageScopeConfig } from "./package-json-reader.ts";
@@ -7,6 +7,13 @@ import { ERR_UNKNOWN_FILE_EXTENSION } from "./errors.ts";
 
 const hasOwnProperty = {}.hasOwnProperty;
 
+// Note: this intentionally diverges from upstream:
+// - Upstream emits `module-typescript`/`commonjs-typescript` for `.ts`/`.mts`/`.cts`
+//   (behind `--strip-types`), but exsolve does not strip types and its only consumer
+//   (`resolve.ts`) checks `format === "module"`, so we keep `.ts`/`.mts` → `module`
+//   and `.cts` → `commonjs`.
+// - Upstream has `.wasm` → `wasm` (and `.node` → `addon` behind a flag), but exsolve
+//   does not support WASM/addon resolution, so those are intentionally omitted.
 const extensionFormatMap: Record<string, string | null> & { __proto__: null } =
   {
     __proto__: null,
@@ -39,19 +46,24 @@ const protocolHandlers: Record<Protocol, ProtocolHandler> & {
 function mimeToFormat(mime: string | null): string | null {
   if (
     mime &&
-    /\s*(text|application)\/javascript\s*(;\s*charset=utf-?8\s*)?/i.test(mime)
+    /^\s*(text|application)\/javascript\s*(;\s*charset=utf-?8\s*)?$/i.test(mime)
   )
     return "module";
   if (mime === "application/json") return "json";
+  // Note: upstream also maps `application/wasm` → `wasm`, intentionally omitted
+  // here since exsolve does not support WASM.
   return null;
 }
 
 function getDataProtocolModuleFormat(parsed: URL): string | null {
-  const { 1: mime } = /^([^/]+\/[^;,]+)[^,]*?(;base64)?,/.exec(
+  const { 1: mime } = /^([^/]+\/[^;,]+)(?:[^,]*?)(;base64)?,/.exec(
     parsed.pathname,
   ) || [null, null, null];
   return mimeToFormat(mime);
 }
+
+const DOT_CODE = 46;
+const SLASH_CODE = 47;
 
 /**
  * Returns the file extension from a URL.
@@ -63,22 +75,18 @@ function getDataProtocolModuleFormat(parsed: URL): string | null {
  */
 function extname(url: URL): string {
   const pathname = url.pathname;
-  let index = pathname.length;
-
-  while (index--) {
-    const code = pathname.codePointAt(index);
-
-    if (code === 47 /* `/` */) {
-      return "";
-    }
-
-    if (code === 46 /* `.` */) {
-      return pathname.codePointAt(index - 1) === 47 /* `/` */
-        ? ""
-        : pathname.slice(index);
+  for (let i = pathname.length - 1; i > 0; i--) {
+    switch (pathname.charCodeAt(i)) {
+      case SLASH_CODE: {
+        return "";
+      }
+      case DOT_CODE: {
+        return pathname.charCodeAt(i - 1) === SLASH_CODE
+          ? ""
+          : pathname.slice(i);
+      }
     }
   }
-
   return "";
 }
 
@@ -96,20 +104,31 @@ function getFileProtocolModuleFormat(
       return packageType;
     }
 
+    // The controlling `package.json` file has no `type` field.
+    // Note: upstream sniffs the source here (`detectModuleFormat`) to decide
+    // between `module` and `commonjs`. exsolve never has a `source`, so for
+    // ambiguous `.js` files we fall back to `commonjs` (legacy behavior).
     return "commonjs";
   }
 
   if (ext === "") {
     const { type: packageType } = getPackageScopeConfig(url);
 
-    // Legacy behavior
-    if (packageType === "none" || packageType === "commonjs") {
-      return "commonjs";
+    if (packageType === "module") {
+      // Note: upstream calls `getFormatOfExtensionlessFile` here to
+      // disambiguate `module` vs `wasm` by reading the file header. exsolve
+      // does not support WASM, so this is always `module`.
+      return "module";
     }
 
-    // Note: we don’t implement WASM, so we don’t need
-    // `getFormatOfExtensionlessFile` from `formats`.
-    return "module";
+    if (packageType !== "none") {
+      return packageType; // 'commonjs' or future package types
+    }
+
+    // The controlling `package.json` file has no `type` field.
+    // Note: upstream sniffs the source here; exsolve never has a `source`, so
+    // we fall back to `commonjs` (legacy behavior).
+    return "commonjs";
   }
 
   const format = extensionFormatMap[ext];
