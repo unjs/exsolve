@@ -4,8 +4,7 @@ import { isAbsolute } from "node:path";
 import { moduleResolve } from "./internal/resolve.ts";
 import { nodeBuiltins } from "./internal/builtins.ts";
 
-const DEFAULT_CONDITIONS = ["node", "import"];
-const DEFAULT_CONDITIONS_SET = /* #__PURE__ */ new Set(DEFAULT_CONDITIONS);
+const DEFAULT_CONDITIONS_SET = /* #__PURE__ */ new Set(["node", "import"]);
 const DEFAULT_CONDITIONS_KEY = "2:6:import4:node";
 
 const isWindows = /* #__PURE__ */ (() => process.platform === "win32")();
