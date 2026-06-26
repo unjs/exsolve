@@ -33,10 +33,10 @@
     "eslint-config-unjs": "^0.6.2",
     "happy-dom": "^20.10.6",
     "jiti": "^2.7.0",
-    "obuild": "^0.4.36",
+    "obuild": "^0.4.37",
     "prettier": "^3.8.4",
     "typescript": "^6.0.3",
     "vitest": "^4.1.9"
   },
-  "packageManager": "pnpm@11.8.0"
+  "packageManager": "pnpm@11.9.0"
 }
