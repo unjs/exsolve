@@ -35,7 +35,7 @@
     "jiti": "^2.7.0",
     "obuild": "^0.4.36",
     "prettier": "^3.8.4",
-    "typescript": "^6.0.3",
+    "typescript": "^7.0.2",
     "vitest": "^4.1.9"
   },
   "packageManager": "pnpm@11.8.0"
