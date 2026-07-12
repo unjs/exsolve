@@ -41,13 +41,9 @@ const { resolveModulePath } = await import("exsolve");
 ```
 
 ```ts
-resolveModuleURL(id, {
-  /* options */
-});
+resolveModuleURL(id, {/* options */});
 
-resolveModulePath(id, {
-  /* options */
-});
+resolveModulePath(id, {/* options */});
 ```
 
 Differences between `resolveModuleURL` and `resolveModulePath`:
