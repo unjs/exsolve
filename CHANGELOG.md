@@ -1,5 +1,23 @@
 # Changelog
 
+## v1.1.1
+
+[compare changes](https://github.com/unjs/exsolve/compare/v1.1.0...v1.1.1)
+
+### 🩹 Fixes
+
+- Match wildcard `imports` keys with a trailer ([#57](https://github.com/unjs/exsolve/pull/57))
+
+### 🏡 Chore
+
+- Update deps ([bf25dd4](https://github.com/unjs/exsolve/commit/bf25dd4))
+- Update repo ([a55eb05](https://github.com/unjs/exsolve/commit/a55eb05))
+
+### ❤️ Contributors
+
+- Pi0x <x@pi0.io>
+- Pooya Parsa ([@pi0](https://github.com/pi0))
+
 ## v1.1.0
 
 [compare changes](https://github.com/unjs/exsolve/compare/v1.0.8...v1.1.0)
