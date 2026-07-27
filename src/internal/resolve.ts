@@ -699,7 +699,7 @@ function packageImportsResolve(name: string, base: URL, conditions?: Set<string>
           const key = keys[i]!;
           const patternIndex = key.indexOf("*");
 
-          if (patternIndex !== -1 && name.startsWith(key.slice(0, -1))) {
+          if (patternIndex !== -1 && name.startsWith(key.slice(0, patternIndex))) {
             const patternTrailer = key.slice(patternIndex + 1);
             if (
               name.length >= key.length &&

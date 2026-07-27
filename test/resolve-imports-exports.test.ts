@@ -24,6 +24,38 @@ describe("package.json imports field", () => {
     expect(resolved).toMatch(/imports-pkg\/internal\.js$/);
     expect(existsSync(fileURLToPath(resolved))).toBe(true);
   });
+
+  // Regression (#56): the pattern base was computed as `key.slice(0, -1)`
+  // instead of `key.slice(0, patternIndex)`, so any wildcard key with a
+  // trailer (`#*.js`) was tested against `name.startsWith("#*.")` and could
+  // never match. Keys without a trailer (`#/*`) happened to work, which hid
+  // the bug. `exports` resolution already used the correct base.
+  it("resolves a wildcard import key with a trailer", () => {
+    const resolved = resolveModuleURL("#internal/marker.js", { from });
+    expect(resolved).toMatch(/imports-pkg\/runtime\/internal\/marker\.js$/);
+    expect(existsSync(fileURLToPath(resolved))).toBe(true);
+  });
+
+  it("resolves a nested wildcard import key with a trailer", () => {
+    const resolved = resolveModuleURL("#lib/deep/thing.js", { from });
+    expect(resolved).toMatch(/imports-pkg\/lib\/deep\/thing\.js$/);
+    expect(existsSync(fileURLToPath(resolved))).toBe(true);
+  });
+
+  // The same bug could also resolve the *wrong* file rather than throw: when
+  // `#feat*.js` was skipped, the less specific `#feat*` won by default and
+  // `feat-any/x.js` was loaded instead. Both targets exist, so this pins key
+  // selection (`patternKeyCompare`) and not mere existence.
+  it("prefers the more specific key when wildcard keys compete", () => {
+    const resolved = resolveModuleURL("#featx.js", { from });
+    expect(resolved).toMatch(/imports-pkg\/feat-js\/x\.js$/);
+    expect(resolved).not.toMatch(/feat-any/);
+  });
+
+  // Boundary: `name.length >= key.length` fails, so `#*.js` must not match.
+  it("does not match a wildcard key when the specifier is too short", () => {
+    expect(() => resolveModuleURL("#.js", { from })).toThrow();
+  });
 });
 
 describe("package.json conditional exports fall-through", () => {

@@ -2,6 +2,10 @@
   "name": "imports-pkg",
   "imports": {
     "#/*": "./src/*",
-    "#internal": "./internal.js"
+    "#internal": "./internal.js",
+    "#*.js": "./runtime/*.js",
+    "#lib/*.js": "./lib/*.js",
+    "#feat*.js": "./feat-js/*.js",
+    "#feat*": "./feat-any/*"
   }
 }
