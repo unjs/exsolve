@@ -29,25 +29,16 @@ Import:
 
 ```ts
 // ESM import
-import {
-  resolveModuleURL,
-  resolveModulePath,
-  createResolver,
-  clearResolveCache,
-} from "exsolve";
+import { resolveModuleURL, resolveModulePath, createResolver, clearResolveCache } from "exsolve";
 
 // Or using dynamic import
 const { resolveModulePath } = await import("exsolve");
 ```
 
 ```ts
-resolveModuleURL(id, {
-  /* options */
-});
+resolveModuleURL(id, {/* options */});
 
-resolveModulePath(id, {
-  /* options */
-});
+resolveModulePath(id, {/* options */});
 ```
 
 Differences between `resolveModuleURL` and `resolveModulePath`:

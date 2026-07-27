@@ -6,8 +6,7 @@ import { defaultGetFormatWithoutErrors } from "../src/internal/get-format.ts";
 
 const context = { parentURL: import.meta.url };
 
-const getFormat = (url: string) =>
-  defaultGetFormatWithoutErrors(new URL(url), context);
+const getFormat = (url: string) => defaultGetFormatWithoutErrors(new URL(url), context);
 
 // A valid, absolute file: URL on every platform (Windows needs a drive letter,
 // so a hard-coded `file:///tmp/...` would throw in `fileURLToPath`). The temp

@@ -1,6 +1,5 @@
 # Changelog
 
-
 ## v1.1.0
 
 [compare changes](https://github.com/unjs/exsolve/compare/v1.0.8...v1.1.0)
@@ -231,11 +230,11 @@
 
 ### 💅 Refactors
 
-- ⚠️  Allow reorder `""` suffix ([69ab48c](https://github.com/unjs/exsolve/commit/69ab48c))
+- ⚠️ Allow reorder `""` suffix ([69ab48c](https://github.com/unjs/exsolve/commit/69ab48c))
 
 #### ⚠️ Breaking Changes
 
-- ⚠️  Allow reorder `""` suffix ([69ab48c](https://github.com/unjs/exsolve/commit/69ab48c))
+- ⚠️ Allow reorder `""` suffix ([69ab48c](https://github.com/unjs/exsolve/commit/69ab48c))
 
 ### ❤️ Contributors
 
@@ -277,7 +276,7 @@
 
 ### 🔥 Performance
 
-- ⚠️  Remove default extra fallbacks ([6b8cd74](https://github.com/unjs/exsolve/commit/6b8cd74))
+- ⚠️ Remove default extra fallbacks ([6b8cd74](https://github.com/unjs/exsolve/commit/6b8cd74))
 
 ### 🏡 Chore
 
@@ -288,7 +287,7 @@
 
 #### ⚠️ Breaking Changes
 
-- ⚠️  Remove default extra fallbacks ([6b8cd74](https://github.com/unjs/exsolve/commit/6b8cd74))
+- ⚠️ Remove default extra fallbacks ([6b8cd74](https://github.com/unjs/exsolve/commit/6b8cd74))
 
 ### ❤️ Contributors
 
@@ -300,11 +299,11 @@
 
 ### 🔥 Performance
 
-- ⚠️  Remove default extra fallbacks ([6b8cd74](https://github.com/unjs/exsolve/commit/6b8cd74))
+- ⚠️ Remove default extra fallbacks ([6b8cd74](https://github.com/unjs/exsolve/commit/6b8cd74))
 
 #### ⚠️ Breaking Changes
 
-- ⚠️  Remove default extra fallbacks ([6b8cd74](https://github.com/unjs/exsolve/commit/6b8cd74))
+- ⚠️ Remove default extra fallbacks ([6b8cd74](https://github.com/unjs/exsolve/commit/6b8cd74))
 
 ### ❤️ Contributors
 
@@ -399,4 +398,3 @@
 ### ❤️ Contributors
 
 - Pooya Parsa ([@pi0](http://github.com/pi0))
-

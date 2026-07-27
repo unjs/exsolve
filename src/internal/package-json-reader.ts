@@ -75,17 +75,11 @@ export function read(
 
     result.exists = true;
 
-    if (
-      hasOwnProperty.call(parsed, "name") &&
-      typeof parsed.name === "string"
-    ) {
+    if (hasOwnProperty.call(parsed, "name") && typeof parsed.name === "string") {
       result.name = parsed.name;
     }
 
-    if (
-      hasOwnProperty.call(parsed, "main") &&
-      typeof parsed.main === "string"
-    ) {
+    if (hasOwnProperty.call(parsed, "main") && typeof parsed.main === "string") {
       result.main = parsed.main;
     }
 

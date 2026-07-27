@@ -6,6 +6,12 @@ import { resolveModuleURL, resolveModulePath } from "../src";
 
 const isWindows = process.platform === "win32";
 
+vi.mock("node:module", () => {
+  return {
+    builtinModules: ["fs", "path", "url", "http", "https", "bun:sqlite"],
+  };
+});
+
 const tests = [
   // Resolve to path
   { input: "vitest", action: "resolves" },
@@ -67,10 +73,7 @@ describe("resolveModuleURL", () => {
     });
     expect(fileURLToPath(resolved2)).match(/fixture[/\\]test.txt$/);
 
-    const absolutePath = nodeResolve(
-      process.cwd(),
-      "./test/fixture/hello.link.mjs",
-    );
+    const absolutePath = nodeResolve(process.cwd(), "./test/fixture/hello.link.mjs");
     const resolved3 = resolveModuleURL(absolutePath);
     expect(fileURLToPath(resolved3)).match(/fixture[/\\]hello\.mjs$/);
   });
@@ -90,14 +93,11 @@ describe("resolveModuleURL", () => {
   });
 
   it("should resolve suffixes to real file", () => {
-    const res = resolveModuleURL(
-      fileURLToPath(new URL("fixture/foo", import.meta.url)),
-      {
-        from: import.meta.url,
-        suffixes: ["/index"],
-        extensions: [".mjs"],
-      },
-    );
+    const res = resolveModuleURL(fileURLToPath(new URL("fixture/foo", import.meta.url)), {
+      from: import.meta.url,
+      suffixes: ["/index"],
+      extensions: [".mjs"],
+    });
     expect(res).toMatch(/\.mjs$/);
   });
 
@@ -120,12 +120,6 @@ describe("resolveModuleURL", () => {
   });
 
   it("resolve builtin modules", () => {
-    vi.mock("node:module", () => {
-      return {
-        builtinModules: ["fs", "path", "url", "http", "https", "bun:sqlite"],
-      };
-    });
-
     expect(() => resolveModuleURL("unknown")).toThrowError();
     expect(resolveModuleURL("node:fs")).toBe("node:fs");
     expect(resolveModuleURL("fs")).toBe("node:fs");
@@ -311,10 +305,7 @@ describe("normalized parent urls", () => {
   ];
 
   const windowsCases = [
-    [
-      String.raw`C:\non\existent`,
-      ["file:///C:/non/existent/", "file:///C:/non/existent"],
-    ],
+    [String.raw`C:\non\existent`, ["file:///C:/non/existent/", "file:///C:/non/existent"]],
   ];
 
   const testCases = [

@@ -14,17 +14,16 @@ const hasOwnProperty = {}.hasOwnProperty;
 //   and `.cts` → `commonjs`.
 // - Upstream has `.wasm` → `wasm` (and `.node` → `addon` behind a flag), but exsolve
 //   does not support WASM/addon resolution, so those are intentionally omitted.
-const extensionFormatMap: Record<string, string | null> & { __proto__: null } =
-  {
-    __proto__: null,
-    ".json": "json",
-    ".cjs": "commonjs",
-    ".cts": "commonjs",
-    ".js": "module",
-    ".ts": "module",
-    ".mts": "module",
-    ".mjs": "module",
-  };
+const extensionFormatMap: Record<string, string | null> & { __proto__: null } = {
+  __proto__: null,
+  ".json": "json",
+  ".cjs": "commonjs",
+  ".cts": "commonjs",
+  ".js": "module",
+  ".ts": "module",
+  ".mts": "module",
+  ".mjs": "module",
+};
 
 type Protocol = "data:" | "file:" | "node:";
 
@@ -44,10 +43,7 @@ const protocolHandlers: Record<Protocol, ProtocolHandler> & {
 };
 
 function mimeToFormat(mime: string | null): string | null {
-  if (
-    mime &&
-    /^\s*(text|application)\/javascript\s*(;\s*charset=utf-?8\s*)?$/i.test(mime)
-  )
+  if (mime && /^\s*(text|application)\/javascript\s*(;\s*charset=utf-?8\s*)?$/i.test(mime))
     return "module";
   if (mime === "application/json") return "json";
   // Note: upstream also maps `application/wasm` → `wasm`, intentionally omitted
@@ -56,9 +52,11 @@ function mimeToFormat(mime: string | null): string | null {
 }
 
 function getDataProtocolModuleFormat(parsed: URL): string | null {
-  const { 1: mime } = /^([^/]+\/[^;,]+)(?:[^,]*?)(;base64)?,/.exec(
-    parsed.pathname,
-  ) || [null, null, null];
+  const { 1: mime } = /^([^/]+\/[^;,]+)(?:[^,]*?)(;base64)?,/.exec(parsed.pathname) || [
+    null,
+    null,
+    null,
+  ];
   return mimeToFormat(mime);
 }
 
@@ -81,20 +79,14 @@ function extname(url: URL): string {
         return "";
       }
       case DOT_CODE: {
-        return pathname.charCodeAt(i - 1) === SLASH_CODE
-          ? ""
-          : pathname.slice(i);
+        return pathname.charCodeAt(i - 1) === SLASH_CODE ? "" : pathname.slice(i);
       }
     }
   }
   return "";
 }
 
-function getFileProtocolModuleFormat(
-  url: URL,
-  _context: unknown,
-  ignoreErrors: boolean,
-) {
+function getFileProtocolModuleFormat(url: URL, _context: unknown, ignoreErrors: boolean) {
   const ext = extname(url);
 
   if (ext === ".js") {

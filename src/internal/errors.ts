@@ -77,19 +77,14 @@ function getExpectedArgumentLength(message: string): number {
 /**
  * Utility function for registering the error codes.
  */
-function createError<
-  T extends MessageFunction | string,
-  C extends ErrorConstructor,
->(
+function createError<T extends MessageFunction | string, C extends ErrorConstructor>(
   sym: string,
   value: T,
   constructor: C,
 ): T extends string
   ? { new (...args: unknown[]): InstanceType<C> & ErrnoException }
   : {
-      new (
-        ...args: Parameters<Exclude<T, string>>
-      ): InstanceType<C> & ErrnoException;
+      new (...args: Parameters<Exclude<T, string>>): InstanceType<C> & ErrnoException;
     } {
   // Special case for SystemError that formats the error message differently
   // The SystemErrors only have SystemError as their base classes.
@@ -101,13 +96,9 @@ function createError<
 // Used to identify Node.js core errors created via `makeNodeErrorWithCode`.
 const kIsNodeError = Symbol("kIsNodeError");
 
-function makeNodeErrorWithCode(
-  Base: ErrorConstructor,
-  key: string,
-): ErrorConstructor {
+function makeNodeErrorWithCode(Base: ErrorConstructor, key: string): ErrorConstructor {
   const message = messages.get(key);
-  const expectedLength =
-    typeof message === "string" ? getExpectedArgumentLength(message) : -1;
+  const expectedLength = typeof message === "string" ? getExpectedArgumentLength(message) : -1;
 
   switch (expectedLength) {
     case 0: {
@@ -317,18 +308,12 @@ export const ERR_INVALID_ARG_TYPE = createError(
     const other: string[] = [];
 
     for (const value of expected) {
-      assert.ok(
-        typeof value === "string",
-        "All expected entries have to be of type string",
-      );
+      assert.ok(typeof value === "string", "All expected entries have to be of type string");
 
       if (kTypes.has(value)) {
         types.push(value.toLowerCase());
       } else if (classRegExp.exec(value) === null) {
-        assert.ok(
-          value !== "object",
-          'The value "object" should be written as "Object"',
-        );
+        assert.ok(value !== "object", 'The value "object" should be written as "Object"');
         other.push(value);
       } else {
         instances.push(value);
@@ -346,10 +331,7 @@ export const ERR_INVALID_ARG_TYPE = createError(
     }
 
     if (types.length > 0) {
-      message += `${types.length > 1 ? "one of type" : "of type"} ${formatList(
-        types,
-        "or",
-      )}`;
+      message += `${types.length > 1 ? "one of type" : "of type"} ${formatList(types, "or")}`;
       if (instances.length > 0 || other.length > 0) message += " or ";
     }
 
@@ -382,9 +364,7 @@ export const ERR_INVALID_MODULE_SPECIFIER = createError(
    * @param {string} [base]
    */
   (request: string, reason: string, base?: string) => {
-    return `Invalid module "${request}" ${reason}${
-      base ? ` imported from ${base}` : ""
-    }`;
+    return `Invalid module "${request}" ${reason}${base ? ` imported from ${base}` : ""}`;
   },
   TypeError,
 );
@@ -401,18 +381,9 @@ export const ERR_INVALID_PACKAGE_CONFIG = createError(
 
 export const ERR_INVALID_PACKAGE_TARGET = createError(
   "ERR_INVALID_PACKAGE_TARGET",
-  (
-    packagePath: string,
-    key: string,
-    target: unknown,
-    isImport: boolean = false,
-    base?: string,
-  ) => {
+  (packagePath: string, key: string, target: unknown, isImport: boolean = false, base?: string) => {
     const relatedError =
-      typeof target === "string" &&
-      !isImport &&
-      target.length > 0 &&
-      !target.startsWith("./");
+      typeof target === "string" && !isImport && target.length > 0 && !target.startsWith("./");
     if (key === ".") {
       assert.ok(isImport === false);
       return (
@@ -423,9 +394,7 @@ export const ERR_INVALID_PACKAGE_TARGET = createError(
       );
     }
 
-    return `Invalid "${
-      isImport ? "imports" : "exports"
-    }" target ${JSON.stringify(
+    return `Invalid "${isImport ? "imports" : "exports"}" target ${JSON.stringify(
       target,
     )} defined for '${key}' in the package config ${packagePath}package.json${
       base ? ` imported from ${base}` : ""
@@ -436,18 +405,11 @@ export const ERR_INVALID_PACKAGE_TARGET = createError(
 
 export const ERR_MODULE_NOT_FOUND = createError(
   "ERR_MODULE_NOT_FOUND",
-  function (
-    this: ErrnoException,
-    path: string,
-    base: string,
-    exactUrl: boolean | string = false,
-  ) {
+  function (this: ErrnoException, path: string, base: string, exactUrl: boolean | string = false) {
     if (exactUrl && typeof exactUrl === "string") {
       this.url = `${exactUrl}`;
     }
-    return `Cannot find ${
-      exactUrl ? "module" : "package"
-    } '${path}' imported from ${base}`;
+    return `Cannot find ${exactUrl ? "module" : "package"} '${path}' imported from ${base}`;
   },
   Error,
 );
@@ -491,8 +453,7 @@ export const ERR_UNSUPPORTED_DIR_IMPORT = createError(
   ) {
     this.url = exactUrl;
     return (
-      `Directory import '${path}' is not supported ` +
-      `resolving ES modules imported from ${base}`
+      `Directory import '${path}' is not supported ` + `resolving ES modules imported from ${base}`
     );
   },
   Error,

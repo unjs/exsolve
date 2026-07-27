@@ -11,10 +11,7 @@ const isWindows = /* #__PURE__ */ (() => process.platform === "win32")();
 
 const globalCache = /* #__PURE__ */ (() =>
   // eslint-disable-next-line unicorn/no-unreadable-iife
-  ((globalThis as any)["__EXSOLVE_CACHE__"] ||= new Map()))() as Map<
-  string,
-  unknown
->;
+  ((globalThis as any)["__EXSOLVE_CACHE__"] ||= new Map()))() as Map<string, unknown>;
 
 /**
  * Options to configure module resolution.
@@ -93,10 +90,7 @@ export function resolveModuleURL<O extends ResolveOptions>(
   let cacheObj: Map<string, unknown> | undefined;
   if (options?.cache !== false) {
     cacheKey = _cacheKey(absolutePath || specifier, options);
-    cacheObj =
-      options?.cache && typeof options?.cache === "object"
-        ? options.cache
-        : globalCache;
+    cacheObj = options?.cache && typeof options?.cache === "object" ? options.cache : globalCache;
   }
 
   if (cacheObj) {
@@ -139,9 +133,7 @@ export function resolveModuleURL<O extends ResolveOptions>(
   }
 
   // Condition set
-  const conditionsSet = options?.conditions
-    ? new Set(options.conditions)
-    : DEFAULT_CONDITIONS_SET;
+  const conditionsSet = options?.conditions ? new Set(options.conditions) : DEFAULT_CONDITIONS_SET;
 
   // Search through bases
   const target = specifier || url.href;
@@ -254,11 +246,7 @@ export function clearResolveCache() {
 
 // --- Internal ---
 
-function _tryModuleResolve(
-  specifier: string,
-  base: URL,
-  conditions: any,
-): URL | undefined {
+function _tryModuleResolve(specifier: string, base: URL, conditions: any): URL | undefined {
   try {
     return moduleResolve(specifier, base, conditions);
   } catch {
@@ -331,9 +319,7 @@ function _conditionsKey(conditions?: string[]) {
   return _cacheKeyValues([...new Set(conditions)].sort());
 }
 
-function _cacheKeyValues(
-  values: readonly (string | URL)[] | undefined,
-): string {
+function _cacheKeyValues(values: readonly (string | URL)[] | undefined): string {
   if (!values) {
     return "-";
   }
@@ -358,15 +344,12 @@ function _normalizeWinPath(path: string): string {
 }
 
 function _isURL(input: unknown): input is URL {
-  return input instanceof URL || input?.constructor?.name === "URL" /* #25 */;
+  return input instanceof URL || input?.constructor?.name === "URL"; /* #25 */
 }
 
 function _parseInput(
   input: string | URL,
-):
-  | { url: URL; absolutePath: string }
-  | { external: string }
-  | { specifier: string } {
+): { url: URL; absolutePath: string } | { external: string } | { specifier: string } {
   if (typeof input === "string") {
     if (input.startsWith("file:")) {
       const url = new URL(input);

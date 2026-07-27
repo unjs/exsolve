@@ -8,8 +8,7 @@ import {
 
 describe("ERR_INVALID_ARG_TYPE splice fix", () => {
   it("folds lowercase object into instances when a class name is present", () => {
-    const message = new ERR_INVALID_ARG_TYPE("opts.x", ["Object", "Buffer"], 42)
-      .message;
+    const message = new ERR_INVALID_ARG_TYPE("opts.x", ["Object", "Buffer"], 42).message;
     expect(message).toBe(
       `The "opts.x" property must be an instance of Buffer or Object. Received type number (42)`,
     );
@@ -17,8 +16,7 @@ describe("ERR_INVALID_ARG_TYPE splice fix", () => {
   });
 
   it("keeps object in the type list for a pure-types case", () => {
-    const message = new ERR_INVALID_ARG_TYPE("opts.x", ["Object", "string"], 42)
-      .message;
+    const message = new ERR_INVALID_ARG_TYPE("opts.x", ["Object", "string"], 42).message;
     expect(message).toBe(
       `The "opts.x" property must be one of type object or string. Received type number (42)`,
     );
@@ -27,12 +25,8 @@ describe("ERR_INVALID_ARG_TYPE splice fix", () => {
 
 describe("class-based machinery", () => {
   it("exposes the code key on instances", () => {
-    expect(new ERR_MODULE_NOT_FOUND("/x/y", "/base").code).toBe(
-      "ERR_MODULE_NOT_FOUND",
-    );
-    expect(new ERR_INVALID_ARG_TYPE("x", "string", 1).code).toBe(
-      "ERR_INVALID_ARG_TYPE",
-    );
+    expect(new ERR_MODULE_NOT_FOUND("/x/y", "/base").code).toBe("ERR_MODULE_NOT_FOUND");
+    expect(new ERR_INVALID_ARG_TYPE("x", "string", 1).code).toBe("ERR_INVALID_ARG_TYPE");
   });
 
   it("uses the correct base classes for instanceof", () => {
@@ -47,9 +41,7 @@ describe("class-based machinery", () => {
 
   it("formats toString as '<Name> [<CODE>]: <message>'", () => {
     const typeErr = new ERR_INVALID_ARG_TYPE("x", "string", 1);
-    expect(typeErr.toString()).toBe(
-      `TypeError [ERR_INVALID_ARG_TYPE]: ${typeErr.message}`,
-    );
+    expect(typeErr.toString()).toBe(`TypeError [ERR_INVALID_ARG_TYPE]: ${typeErr.message}`);
     expect(typeErr.toString()).toContain("TypeError [ERR_INVALID_ARG_TYPE]: ");
   });
 
@@ -92,16 +84,8 @@ describe("determineSpecificType via ERR_INVALID_ARG_TYPE 'Received' tail", () =>
     ["negative zero", -0, "Received type number (-0)"],
     ["zero", 0, "Received type number (0)"],
     ["NaN", Number.NaN, "Received type number (NaN)"],
-    [
-      "positive infinity",
-      Number.POSITIVE_INFINITY,
-      "Received type number (Infinity)",
-    ],
-    [
-      "negative infinity",
-      Number.NEGATIVE_INFINITY,
-      "Received type number (-Infinity)",
-    ],
+    ["positive infinity", Number.POSITIVE_INFINITY, "Received type number (Infinity)"],
+    ["negative infinity", Number.NEGATIVE_INFINITY, "Received type number (-Infinity)"],
     ["boolean", true, "Received type boolean (true)"],
     ["symbol", Symbol("s"), "Received type symbol (Symbol(s))"],
     ["short string", "abc", "Received type string ('abc')"],
