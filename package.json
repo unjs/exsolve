@@ -25,18 +25,18 @@
     "test:types": "tsc --noEmit --skipLibCheck"
   },
   "devDependencies": {
-    "@types/node": "^26.1.1",
-    "@vitest/coverage-v8": "^4.1.10",
+    "@types/node": "^26.4.1",
+    "@vitest/coverage-v8": "^4.1.11",
     "automd": "^0.4.3",
     "changelogen": "^0.6.2",
     "eslint-config-unjs": "^0.6.2",
-    "happy-dom": "^20.11.1",
+    "happy-dom": "^20.14.0",
     "jiti": "^2.7.0",
-    "obuild": "^0.4.38",
-    "oxfmt": "^0.60.0",
-    "oxlint": "^1.75.0",
+    "obuild": "^0.4.39",
+    "oxfmt": "^0.66.0",
+    "oxlint": "^1.81.0",
     "typescript": "^7.0.2",
-    "vitest": "^4.1.10"
+    "vitest": "^4.1.11"
   },
-  "packageManager": "pnpm@11.17.0"
+  "packageManager": "pnpm@11.25.0"
 }
