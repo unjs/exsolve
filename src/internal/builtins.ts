@@ -34,4 +34,4 @@ export const nodeBuiltins = [
     'url',                 'util',                'util/types',
     'v8',                  'vm',                  'wasi',
     'worker_threads',      'zlib'
-]
+];
