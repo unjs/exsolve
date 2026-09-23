@@ -1,6 +1,8 @@
 import { existsSync } from "node:fs";
 import { resolve as nodeResolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import { setFlagsFromString } from "node:v8";
+import { runInNewContext } from "node:vm";
 import { describe, it, expect, vi } from "vitest";
 import { resolveModuleURL, resolveModulePath } from "../src";
 
@@ -219,6 +221,34 @@ describe("resolve cache", () => {
     });
 
     expect(cache).toHaveLength(2);
+  });
+
+  it("does not keep the caller alive through a cached error", async () => {
+    setFlagsFromString("--expose-gc");
+    const gc = runInNewContext("gc") as () => void;
+
+    const cache = new Map<string, unknown>();
+    class Caller {
+      resolve() {
+        return resolveModuleURL("missing-retained-caller", {
+          cache,
+          from: import.meta.url,
+          try: true,
+        });
+      }
+    }
+
+    let caller: Caller | undefined = new Caller();
+    const ref = new WeakRef(caller);
+    expect(caller.resolve()).toBeUndefined();
+    expect(cache).toHaveLength(1);
+
+    caller = undefined;
+    // A `WeakRef` target stays alive until the current job ends.
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    gc();
+
+    expect(ref.deref()).toBeUndefined();
   });
 
   it("separates bases and suffixes", () => {
