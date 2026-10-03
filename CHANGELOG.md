@@ -1,5 +1,17 @@
 # Changelog
 
+## v1.1.3
+
+[compare changes](https://github.com/unjs/exsolve/compare/v1.1.2...v1.1.3)
+
+### 🏡 Chore
+
+- Fix release script ([a145192](https://github.com/unjs/exsolve/commit/a145192))
+
+### ❤️ Contributors
+
+- Pooya Parsa ([@pi0](https://github.com/pi0))
+
 ## v1.1.2
 
 [compare changes](https://github.com/unjs/exsolve/compare/v1.1.1...v1.1.2)
