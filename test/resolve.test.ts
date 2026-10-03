@@ -221,6 +221,40 @@ describe("resolve cache", () => {
     expect(cache).toHaveLength(2);
   });
 
+  it("does not keep the caller alive through a cached error", async () => {
+    const { gc } = globalThis;
+    if (!gc) {
+      throw new Error("`gc` is not exposed; `vitest.config.ts` should pass `--expose-gc`");
+    }
+
+    const cache = new Map<string, unknown>();
+    class Caller {
+      resolve() {
+        return resolveModuleURL("missing-retained-caller", {
+          cache,
+          from: import.meta.url,
+          try: true,
+        });
+      }
+    }
+
+    let caller: Caller | undefined = new Caller();
+    const ref = new WeakRef(caller);
+    expect(caller.resolve()).toBeUndefined();
+    expect(cache).toHaveLength(1);
+
+    caller = undefined;
+    // One `gc()` is not guaranteed to reclaim the target, so retry a few times. Creating or
+    // dereferencing a `WeakRef` keeps its target alive until the current job ends, so yield
+    // to the event loop before each pass.
+    for (let attempt = 0; attempt < 10 && ref.deref(); attempt++) {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      gc();
+    }
+
+    expect(ref.deref()).toBeUndefined();
+  });
+
   it("separates bases and suffixes", () => {
     const cache = new Map<string, unknown>();
     const fixture = new URL("fixture/", import.meta.url);
