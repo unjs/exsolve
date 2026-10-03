@@ -1,5 +1,17 @@
 # Changelog
 
+## v1.1.2
+
+[compare changes](https://github.com/unjs/exsolve/compare/v1.1.1...v1.1.2)
+
+### 🩹 Fixes
+
+- Don't keep callers alive through cached errors ([#63](https://github.com/unjs/exsolve/pull/63))
+
+### ❤️ Contributors
+
+- Shivansh Talwar ([@shivanshtalwar0](https://github.com/shivanshtalwar0))
+
 ## v1.1.1
 
 [compare changes](https://github.com/unjs/exsolve/compare/v1.1.0...v1.1.1)
