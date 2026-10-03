@@ -296,11 +296,15 @@ function _fmtPath(input: URL | string) {
   }
 }
 
+/**
+ * Caches a resolve error without keeping its callers alive.
+ *
+ * V8 formats `error.stack` lazily. Until the first read, the error holds the raw call
+ * sites, including each frame's receiver. A cached error lives as long as the cache,
+ * so format the stack now rather than keep the caller alive (for example a bundler's
+ * plugin context and the whole module graph behind it).
+ */
 function _cacheError(cache: Map<string, unknown>, key: string, error: Error) {
-  // V8 formats `error.stack` lazily. Until the first read, the error holds the raw call
-  // sites, including each frame's receiver. A cached error lives as long as the cache,
-  // so format the stack now rather than keep the caller alive (for example a bundler's
-  // plugin context and the whole module graph behind it).
   void error.stack;
   cache.set(key, error);
 }

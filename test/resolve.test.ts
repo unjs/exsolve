@@ -1,8 +1,6 @@
 import { existsSync } from "node:fs";
 import { resolve as nodeResolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import { setFlagsFromString } from "node:v8";
-import { runInNewContext } from "node:vm";
 import { describe, it, expect, vi } from "vitest";
 import { resolveModuleURL, resolveModulePath } from "../src";
 
@@ -224,8 +222,10 @@ describe("resolve cache", () => {
   });
 
   it("does not keep the caller alive through a cached error", async () => {
-    setFlagsFromString("--expose-gc");
-    const gc = runInNewContext("gc") as () => void;
+    const { gc } = globalThis;
+    if (!gc) {
+      throw new Error("`gc` is not exposed; `vitest.config.ts` should pass `--expose-gc`");
+    }
 
     const cache = new Map<string, unknown>();
     class Caller {
@@ -244,9 +244,13 @@ describe("resolve cache", () => {
     expect(cache).toHaveLength(1);
 
     caller = undefined;
-    // A `WeakRef` target stays alive until the current job ends.
-    await new Promise((resolve) => setTimeout(resolve, 0));
-    gc();
+    // One `gc()` is not guaranteed to reclaim the target, so retry a few times. Creating or
+    // dereferencing a `WeakRef` keeps its target alive until the current job ends, so yield
+    // to the event loop before each pass.
+    for (let attempt = 0; attempt < 10 && ref.deref(); attempt++) {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      gc();
+    }
 
     expect(ref.deref()).toBeUndefined();
   });
