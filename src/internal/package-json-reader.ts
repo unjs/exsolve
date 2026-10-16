@@ -43,7 +43,7 @@ export function read(
   } catch (error) {
     const exception = error as ErrnoException;
 
-    if (exception.code !== "ENOENT") {
+    if (exception.code !== "ENOENT" && exception?.code !== "ENOTDIR") {
       throw exception;
     }
   }
