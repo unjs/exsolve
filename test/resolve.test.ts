@@ -78,6 +78,28 @@ describe("resolveModuleURL", () => {
     expect(fileURLToPath(resolved3)).match(/fixture[/\\]hello\.mjs$/);
   });
 
+  it("preserves symlinks with preserveSymlinks: true", () => {
+    const resolved = resolveModuleURL("./fixture/hello.link.mjs", {
+      from: import.meta.url,
+      preserveSymlinks: true,
+    });
+    expect(fileURLToPath(resolved)).match(/fixture[/\\]hello\.link\.mjs$/);
+
+    const resolved2 = resolveModuleURL("./fixture/test.link.txt", {
+      from: import.meta.url,
+      preserveSymlinks: true,
+    });
+    expect(fileURLToPath(resolved2)).match(/fixture[/\\]test\.link\.txt$/);
+
+    const absolutePath = nodeResolve(process.cwd(), "./test/fixture/hello.link.mjs");
+    const resolved3 = resolveModuleURL(absolutePath, { preserveSymlinks: true });
+    expect(fileURLToPath(resolved3)).match(/fixture[/\\]hello\.link\.mjs$/);
+
+    // Cache must not leak between preserveSymlinks modes
+    const resolved4 = resolveModuleURL(absolutePath);
+    expect(fileURLToPath(resolved4)).match(/fixture[/\\]hello\.mjs$/);
+  });
+
   it("resolves node built-ints", () => {
     expect(resolveModuleURL("node:fs")).toBe("node:fs");
     expect(resolveModuleURL("fs")).toBe("node:fs");
