@@ -116,7 +116,7 @@ export function resolveModuleURL<O extends ResolveOptions>(
     try {
       const stat = lstatSync(absolutePath);
 
-      if (stat.isSymbolicLink() && !options?.preserveSymlinks) {
+      if (!options?.preserveSymlinks && stat.isSymbolicLink()) {
         absolutePath = realpathSync(absolutePath);
         url = pathToFileURL(absolutePath);
       }
