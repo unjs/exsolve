@@ -24,8 +24,8 @@ importers:
         specifier: ^0.6.2
         version: 0.6.2(eslint@10.8.0(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0)(typescript@7.0.2)
       happy-dom:
-        specifier: ^20.14.5
-        version: 20.14.5
+        specifier: ^21.0.4
+        version: 21.0.4
       jiti:
         specifier: ^2.7.0
         version: 2.7.0
@@ -43,7 +43,7 @@ importers:
         version: 7.0.2
       vitest:
         specifier: ^4.1.10
-        version: 4.1.10(@types/node@26.6.4)(@vitest/coverage-v8@4.1.11)(happy-dom@20.14.5)(jsdom@26.1.0(supports-color@7.2.0))(vite@7.2.2(@types/node@26.6.4)(jiti@2.7.0)(yaml@2.7.0))
+        version: 4.1.10(@types/node@26.6.4)(@vitest/coverage-v8@4.1.11)(happy-dom@21.0.4)(jsdom@26.1.0(supports-color@7.2.0))(vite@7.2.2(@types/node@26.6.4)(jiti@2.7.0)(yaml@2.7.0))
 
 packages:
 
@@ -1725,8 +1725,8 @@ packages:
     resolution: {integrity: sha512-Czmyns5dUsq4seFBR/Kdydhmo8y9kC79hiSkPn0YcGtNnYWnrgt0vjrSjx9tspoDGWm2CMarffRuLjM4xUz8xg==}
     engines: {node: '>=18'}
 
-  happy-dom@20.14.5:
-    resolution: {integrity: sha512-x/RzkpWO40bTjIoT30iQtt64FLLmH/iRcUCN2X//bLx7H3ifkdfPXyqsro/OYtqzIAhiLMMA7mmiOR9C3NOKjQ==}
+  happy-dom@21.0.4:
+    resolution: {integrity: sha512-tFm+GaLBgo6o0awHnvHaNoraVo27qJ+2tZEtZ+cIa08hXbeitrxAJajLI05hsUy/2/YTKcUjQYzHe5mCcraLBw==}
     engines: {node: '>=20.0.0'}
 
   has-flag@4.0.0:
@@ -3232,7 +3232,7 @@ snapshots:
       obug: 2.1.4
       std-env: 4.2.0
       tinyrainbow: 3.1.0
-      vitest: 4.1.10(@types/node@26.6.4)(@vitest/coverage-v8@4.1.11)(happy-dom@20.14.5)(jsdom@26.1.0(supports-color@7.2.0))(vite@7.2.2(@types/node@26.6.4)(jiti@2.7.0)(yaml@2.7.0))
+      vitest: 4.1.10(@types/node@26.6.4)(@vitest/coverage-v8@4.1.11)(happy-dom@21.0.4)(jsdom@26.1.0(supports-color@7.2.0))(vite@7.2.2(@types/node@26.6.4)(jiti@2.7.0)(yaml@2.7.0))
 
   '@vitest/expect@4.1.10':
     dependencies:
@@ -3797,9 +3797,9 @@ snapshots:
 
   globals@17.7.0: {}
 
-  happy-dom@20.14.5:
+  happy-dom@21.0.4:
     dependencies:
-      '@types/node': 26.1.1
+      '@types/node': 26.6.4
       '@types/whatwg-mimetype': 3.0.2
       '@types/ws': 8.18.1
       buffer-image-size: 0.6.4
@@ -4726,7 +4726,7 @@ snapshots:
       jiti: 2.7.0
       yaml: 2.7.0
 
-  vitest@4.1.10(@types/node@26.6.4)(@vitest/coverage-v8@4.1.11)(happy-dom@20.14.5)(jsdom@26.1.0(supports-color@7.2.0))(vite@7.2.2(@types/node@26.6.4)(jiti@2.7.0)(yaml@2.7.0)):
+  vitest@4.1.10(@types/node@26.6.4)(@vitest/coverage-v8@4.1.11)(happy-dom@21.0.4)(jsdom@26.1.0(supports-color@7.2.0))(vite@7.2.2(@types/node@26.6.4)(jiti@2.7.0)(yaml@2.7.0)):
     dependencies:
       '@vitest/expect': 4.1.10
       '@vitest/mocker': 4.1.10(vite@7.2.2(@types/node@26.6.4)(jiti@2.7.0)(yaml@2.7.0))
@@ -4751,7 +4751,7 @@ snapshots:
     optionalDependencies:
       '@types/node': 26.6.4
       '@vitest/coverage-v8': 4.1.11(vitest@4.1.10)
-      happy-dom: 20.14.5
+      happy-dom: 21.0.4
       jsdom: 26.1.0(supports-color@7.2.0)
     transitivePeerDependencies:
       - msw
