@@ -123,7 +123,7 @@ export function resolveModuleURL<O extends ResolveOptions>(
         return url.href;
       }
     } catch (error: any) {
-      if (error?.code !== "ENOENT") {
+      if (error?.code !== "ENOENT" && error?.code !== "ENOTDIR") {
         if (cacheObj) {
           _cacheError(cacheObj, cacheKey!, error);
         }
