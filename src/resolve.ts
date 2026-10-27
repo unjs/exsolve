@@ -475,6 +475,10 @@ function _isURL(input: unknown): input is URL {
  * keeping a trailing separator), so the path that is checked is the one that is returned.
  */
 function _normalizeAbsolutePath(input: string): string {
+  // `pathToFileURL` also drops the `\\?\` prefix of Windows long paths
+  if (isWindows && input.startsWith("\\\\?\\")) {
+    return fileURLToPath(pathToFileURL(input));
+  }
   const path = resolve(input);
   const last = input.at(-1);
   if ((last === "/" || (isWindows && last === "\\")) && !path.endsWith(sep)) {

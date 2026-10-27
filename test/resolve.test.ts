@@ -609,6 +609,15 @@ describe("package.json cache", () => {
 });
 
 describe.runIf(isWindows)("windows", () => {
+  it("resolves long path (`\\\\?\\`) inputs", () => {
+    const input = "\\\\?\\" + fileURLToPath(new URL("fixture/hello.mjs", import.meta.url));
+    for (const preserveSymlinks of [false, true]) {
+      expect(resolveModuleURL(input, { preserveSymlinks, cache: false })).match(
+        /^file:\/\/\/\w:\/.*\/fixture\/hello\.mjs$/,
+      );
+    }
+  });
+
   it("normalizes drive letter and slashes", () => {
     for (const input of [
       "./fixture/hello.mjs",
