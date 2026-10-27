@@ -52,11 +52,7 @@ function mimeToFormat(mime: string | null): string | null {
 }
 
 function getDataProtocolModuleFormat(parsed: URL): string | null {
-  const { 1: mime } = /^([^/]+\/[^;,]+)(?:[^,]*?)(;base64)?,/.exec(parsed.pathname) || [
-    null,
-    null,
-    null,
-  ];
+  const { 1: mime } = /^([^/]+\/[^;,]+)(?:;[^,]*)?,/.exec(parsed.pathname) || [null, null, null];
   return mimeToFormat(mime);
 }
 

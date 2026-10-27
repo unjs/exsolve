@@ -46,6 +46,32 @@ describe("defaultGetFormatWithoutErrors", () => {
     it("returns null for text/plain", () => {
       expect(getFormat("data:text/plain,hello")).toBe(null);
     });
+
+    it("maps text/javascript with base64 to module", () => {
+      expect(getFormat("data:text/javascript;base64,MQ==")).toBe("module");
+    });
+
+    it("maps text/javascript with charset=utf-8 and base64 to module", () => {
+      expect(getFormat("data:text/javascript;charset=utf-8;base64,MQ==")).toBe("module");
+    });
+
+    it("maps application/json with charset to json", () => {
+      expect(getFormat("data:application/json;charset=utf-8,{}")).toBe("json");
+    });
+
+    it("returns null without a comma separator", () => {
+      expect(getFormat("data:text/javascript")).toBe(null);
+      expect(getFormat("data:text/javascript;base64")).toBe(null);
+    });
+
+    // Regression: the mime regex used to backtrack super-linearly on malformed
+    // input without a `,` (nodejs/node#61904). ~100k chars took seconds before.
+    it("returns null quickly for long malformed input", () => {
+      const url = new URL(`data:a/${"a".repeat(1e5)}B`);
+      const start = performance.now();
+      expect(defaultGetFormatWithoutErrors(url, context)).toBe(null);
+      expect(performance.now() - start).toBeLessThan(100);
+    });
   });
 
   describe("node: protocol", () => {
