@@ -1,5 +1,43 @@
 # Changelog
 
+## v1.2.0
+
+[compare changes](https://github.com/unjs/exsolve/compare/v1.1.3...v1.2.0)
+
+### 🚀 Enhancements
+
+- Expose `preserveSymlinks` ([#72](https://github.com/unjs/exsolve/pull/72))
+
+### 🔥 Performance
+
+- Use `throwIfNoEntry: false` in `tryStatSync` ([#73](https://github.com/unjs/exsolve/pull/73))
+
+### 🩹 Fixes
+
+- **resolve:** Also exclude `ENOTDIR` for error bubbling ([#69](https://github.com/unjs/exsolve/pull/69))
+- Don't strip trailing slash before stat in `finalizeResolution` ([#74](https://github.com/unjs/exsolve/pull/74))
+- Reject trailing-slash file paths on Windows in `finalizeResolution` ([8864bce](https://github.com/unjs/exsolve/commit/8864bce))
+- Don't return stale or shared results from the resolve cache ([4cb62ee](https://github.com/unjs/exsolve/commit/4cb62ee))
+- Reset package.json cache when the resolve cache is cleared directly ([#79](https://github.com/unjs/exsolve/pull/79))
+- Handle symlinked parents, `..`, `try` and empty input for absolute paths ([#78](https://github.com/unjs/exsolve/pull/78))
+- Avoid super-linear data URL MIME regex ([7f5dc9c](https://github.com/unjs/exsolve/commit/7f5dc9c))
+- Report unreadable package.json instead of ignoring it ([#81](https://github.com/unjs/exsolve/pull/81))
+- Validate constructor name in error value type detection ([#80](https://github.com/unjs/exsolve/pull/80))
+
+### 🏡 Chore
+
+- Update upstream sync markers for errors and get-format ([2b41c96](https://github.com/unjs/exsolve/commit/2b41c96))
+- Update deps ([05e84a1](https://github.com/unjs/exsolve/commit/05e84a1))
+- Remove unused eslint-config-unjs ([f5867a8](https://github.com/unjs/exsolve/commit/f5867a8))
+
+### ❤️ Contributors
+
+- Pooya Parsa <pooya@pi0.io>
+- Pi0x <x@pi0.io>
+- James Garbutt
+- Max <maximogarciamtnez@gmail.com>
+- Robin <robin.kehl@singular-it.de>
+
 ## v1.1.3
 
 [compare changes](https://github.com/unjs/exsolve/compare/v1.1.2...v1.1.3)
