@@ -1,5 +1,5 @@
 // Source:  https://github.com/nodejs/node/blob/main/lib/internal/errors.js
-// Changes: https://github.com/nodejs/node/commits/main/lib/internal/errors.js?since=2026-06-21
+// Changes: https://github.com/nodejs/node/commits/main/lib/internal/errors.js?since=2026-10-27
 
 import assert from "node:assert";
 import { format, inspect } from "node:util";

@@ -1,5 +1,5 @@
 // Source:  https://github.com/nodejs/node/blob/main/lib/internal/modules/esm/get_format.js
-// Changes: https://github.com/nodejs/node/commits/main/lib/internal/modules/esm/get_format.js?since=2026-06-21
+// Changes: https://github.com/nodejs/node/commits/main/lib/internal/modules/esm/get_format.js?since=2026-10-27
 
 import { fileURLToPath } from "node:url";
 import { getPackageScopeConfig } from "./package-json-reader.ts";
@@ -14,6 +14,8 @@ const hasOwnProperty = {}.hasOwnProperty;
 //   and `.cts` → `commonjs`.
 // - Upstream has `.wasm` → `wasm` (and `.node` → `addon` behind a flag), but exsolve
 //   does not support WASM/addon resolution, so those are intentionally omitted.
+// - Upstream's `text` format (behind `--experimental-import-text`) and VFS loader
+//   hooks are not ported.
 const extensionFormatMap: Record<string, string | null> & { __proto__: null } = {
   __proto__: null,
   ".json": "json",
