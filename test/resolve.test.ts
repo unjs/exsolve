@@ -144,6 +144,15 @@ describe("resolveModuleURL", () => {
     );
   });
 
+  it("does not resolve absolute file paths with a trailing slash", () => {
+    const input = fileURLToPath(new URL("fixture/hello.mjs", import.meta.url)) + "/";
+    for (const preserveSymlinks of [false, true]) {
+      for (const id of [input, pathToFileURL(input)]) {
+        expect(resolveModuleURL(id, { preserveSymlinks, try: true })).toBeUndefined();
+      }
+    }
+  });
+
   it("does not apply `..` to the symlink target of absolute paths", () => {
     // `links/foo/../hello.mjs` exists through the symlink but not as written
     const input = fileURLToPath(new URL("fixture/links/foo", import.meta.url)) + "/../hello.mjs";

@@ -124,7 +124,8 @@ export function resolveModuleURL<O extends ResolveOptions>(
     try {
       const stat = statSync(absolutePath);
 
-      if (stat.isFile()) {
+      // A trailing slash never names a file (Windows stat ignores it), see `finalizeResolution`
+      if (stat.isFile() && !url.pathname.endsWith("/")) {
         // Resolve symlinks in any segment (not only the last one), like `finalizeResolution`
         const realPath = options?.preserveSymlinks ? absolutePath : realpathSync(absolutePath);
         if (realPath !== absolutePath) {
