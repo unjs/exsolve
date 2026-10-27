@@ -133,6 +133,17 @@ describe("resolveModuleURL", () => {
     );
   });
 
+  it("appends suffixes and extensions before search and hash of absolute URLs", () => {
+    const fixture = new URL("fixture/", import.meta.url);
+    const options = { extensions: [".mjs"], suffixes: ["", "/index"], cache: false };
+    expect(resolveModuleURL(new URL("hello?x=1#y", fixture).href, options)).match(
+      /fixture\/hello\.mjs\?x=1#y$/,
+    );
+    expect(resolveModuleURL(new URL("foo?x=1", fixture).href, options)).match(
+      /fixture\/foo\/index\.mjs\?x=1$/,
+    );
+  });
+
   it("does not apply `..` to the symlink target of absolute paths", () => {
     // `links/foo/../hello.mjs` exists through the symlink but not as written
     const input = fileURLToPath(new URL("fixture/links/foo", import.meta.url)) + "/../hello.mjs";

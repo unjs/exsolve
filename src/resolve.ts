@@ -155,7 +155,14 @@ export function resolveModuleURL<O extends ResolveOptions>(
   const conditionsSet = options?.conditions ? new Set(options.conditions) : DEFAULT_CONDITIONS_SET;
 
   // Search through bases
-  const target = absolutePath ? url.href : specifier;
+  let target = specifier;
+  if (absolutePath) {
+    // Append suffixes and extensions before search and hash (restored after resolution)
+    const targetURL = new URL(url);
+    targetURL.search = "";
+    targetURL.hash = "";
+    target = targetURL.href;
+  }
   // Absolute inputs don't depend on the base, so probe them once
   const bases: URL[] = absolutePath ? [url] : _normalizeBases(options?.from);
   const suffixes = options?.suffixes || [""];
@@ -208,6 +215,11 @@ export function resolveModuleURL<O extends ResolveOptions>(
     }
 
     throw error;
+  }
+
+  if (absolutePath) {
+    resolved.search = url.search;
+    resolved.hash = url.hash;
   }
 
   if (cacheObj) {
