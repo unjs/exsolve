@@ -197,7 +197,8 @@ function finalizeResolution(resolved: URL, base: URL, preserveSymlinks?: boolean
     throw error;
   }
 
-  const stats = tryStatSync(filePath.endsWith("/") ? filePath.slice(-1) : filePath);
+  // Stat as-is: a trailing slash makes a file fail with ENOTDIR (→ not found).
+  const stats = tryStatSync(filePath);
 
   if (stats && stats.isDirectory()) {
     const error = new ERR_UNSUPPORTED_DIR_IMPORT(filePath, fileURLToPath(base));
