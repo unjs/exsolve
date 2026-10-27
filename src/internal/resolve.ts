@@ -197,7 +197,6 @@ function finalizeResolution(resolved: URL, base: URL, preserveSymlinks?: boolean
     throw error;
   }
 
-  // Stat as-is: a trailing slash makes a file fail with ENOTDIR (→ not found).
   const stats = tryStatSync(filePath);
 
   if (stats && stats.isDirectory()) {
@@ -207,7 +206,8 @@ function finalizeResolution(resolved: URL, base: URL, preserveSymlinks?: boolean
     throw error;
   }
 
-  if (!stats || !stats.isFile()) {
+  // A trailing slash never names a file (Windows stat ignores it, POSIX fails with ENOTDIR).
+  if (!stats || !stats.isFile() || resolved.pathname.endsWith("/")) {
     const error = new ERR_MODULE_NOT_FOUND(
       filePath || resolved.pathname,
       base && fileURLToPath(base),
@@ -221,7 +221,7 @@ function finalizeResolution(resolved: URL, base: URL, preserveSymlinks?: boolean
   if (!preserveSymlinks) {
     const real = realpathSync(filePath);
     const { search, hash } = resolved;
-    resolved = pathToFileURL(real + (filePath.endsWith(path.sep) ? "/" : ""));
+    resolved = pathToFileURL(real);
     resolved.search = search;
     resolved.hash = hash;
   }
