@@ -108,15 +108,11 @@ function emitLegacyIndexDeprecation(url: URL, packageJsonUrl: URL, base: URL, ma
 }
 
 function tryStatSync(path: string): Stats | undefined {
-  // `throwIfNoEntry: false` returns `undefined` for missing paths instead of
-  // throwing, so probing many non-existing paths stays cheap.
+  // `throwIfNoEntry: false` avoids costly ENOENT throws when probing missing paths.
   try {
     return statSync(path, { throwIfNoEntry: false });
   } catch {
-    // Note: in Node code this returns `new Stats`,
-    // but in Node 22 that’s marked as a deprecated internal API.
-    // Which, well, we kinda are, but still to prevent that warning,
-    // just yield `undefined`.
+    // Other errors (e.g. ENOTDIR) yield `undefined` (Node returns deprecated `new Stats`).
   }
 }
 

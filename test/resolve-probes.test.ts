@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { resolveModuleURL } from "../src";
 
-// Records every path for which `statSync` threw.
+// Records every path for which `statSync` threw ENOENT.
 const statThrows = vi.hoisted(() => [] as string[]);
 
 vi.mock("node:fs", async (importOriginal) => {
@@ -10,7 +10,9 @@ vi.mock("node:fs", async (importOriginal) => {
     try {
       return fs.statSync(...args);
     } catch (error) {
-      statThrows.push(String(args[0]));
+      if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+        statThrows.push(String(args[0]));
+      }
       throw error;
     }
   }) as typeof fs.statSync;
