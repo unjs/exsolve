@@ -2,6 +2,8 @@ import { lstatSync, statSync } from "node:fs";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { isAbsolute } from "node:path";
 import { moduleResolve } from "./internal/resolve.ts";
+import { setPackageJSONCache } from "./internal/package-json-reader.ts";
+import type { PackageConfig } from "./internal/package-json-reader.ts";
 import { nodeBuiltins } from "./internal/builtins.ts";
 
 const DEFAULT_CONDITIONS_SET = /* #__PURE__ */ new Set(["node", "import"]);
@@ -12,6 +14,12 @@ const isWindows = /* #__PURE__ */ (() => process.platform === "win32")();
 const globalCache = /* #__PURE__ */ (() =>
   // eslint-disable-next-line unicorn/no-unreadable-iife
   ((globalThis as any)["__EXSOLVE_CACHE__"] ||= new Map()))() as Map<string, unknown>;
+
+// package.json reads, kept for as long as the resolve cache they were made for
+const packageJSONCaches = /* #__PURE__ */ new WeakMap<
+  Map<string, unknown>,
+  Map<string, PackageConfig>
+>();
 
 /**
  * Options to configure module resolution.
@@ -94,7 +102,7 @@ export function resolveModuleURL<O extends ResolveOptions>(
   let cacheKey: string | undefined;
   let cacheObj: Map<string, unknown> | undefined;
   if (options?.cache !== false) {
-    cacheKey = _cacheKey(absolutePath || specifier, options);
+    cacheKey = _cacheKey(specifier || url.href, options, !specifier);
     cacheObj = options?.cache && typeof options?.cache === "object" ? options.cache : globalCache;
   }
 
@@ -107,7 +115,7 @@ export function resolveModuleURL<O extends ResolveOptions>(
       if (options?.try) {
         return undefined as any;
       }
-      throw cached;
+      throw _copyError(cached);
     }
   }
 
@@ -142,6 +150,8 @@ export function resolveModuleURL<O extends ResolveOptions>(
   const suffixes = options?.suffixes || [""];
   const extensions = options?.extensions ? ["", ...options.extensions] : [""];
   let resolved: URL | undefined;
+  // `_tryModuleResolve` does not throw, so the previous cache is always restored
+  const previousPackageJSONCache = setPackageJSONCache(_packageJSONCache(cacheObj));
   for (const base of bases) {
     for (const suffix of suffixes) {
       let name = _join(target, suffix);
@@ -167,6 +177,7 @@ export function resolveModuleURL<O extends ResolveOptions>(
       break;
     }
   }
+  setPackageJSONCache(previousPackageJSONCache);
 
   // Throw error if not found
   if (!resolved) {
@@ -238,8 +249,9 @@ export function createResolver(defaults?: ResolverOptions) {
       if (defaults?.cache !== false) {
         if (defaults?.cache && typeof defaults?.cache === "object") {
           defaults.cache.clear();
+          packageJSONCaches.delete(defaults.cache);
         } else {
-          globalCache.clear();
+          clearResolveCache();
         }
       }
     },
@@ -248,6 +260,7 @@ export function createResolver(defaults?: ResolverOptions) {
 
 export function clearResolveCache() {
   globalCache.clear();
+  packageJSONCaches.delete(globalCache);
 }
 
 // --- Internal ---
@@ -308,33 +321,92 @@ function _fmtPath(input: URL | string) {
 }
 
 /**
- * Caches a resolve error without keeping its callers alive.
+ * Caches a copy of a resolve error without keeping its callers alive.
  *
- * V8 formats `error.stack` lazily. Until the first read, the error holds the raw call
+ * Callers may change the errors they catch (bundlers set their own `code` or prefix the
+ * message), so the thrown error is never cached and cache hits throw a new copy.
+ *
+ * V8 formats `error.stack` lazily. Until the first read, an error holds the raw call
  * sites, including each frame's receiver. A cached error lives as long as the cache,
- * so format the stack now rather than keep the caller alive (for example a bundler's
- * plugin context and the whole module graph behind it).
+ * so the copy gets the formatted stack rather than keep the caller alive (for example
+ * a bundler's plugin context and the whole module graph behind it).
  */
 function _cacheError(cache: Map<string, unknown>, key: string, error: Error) {
-  void error.stack;
-  cache.set(key, error);
+  const copy = _copyError(error);
+  copy.stack = error.stack;
+  cache.set(key, copy);
 }
 
-function _cacheKey(id: string, options?: ResolveOptions) {
+/**
+ * Copies an error with its class and own properties (`message`, `code`, `cause`, ...).
+ * The copy's stack is the current one.
+ */
+function _copyError(error: Error): Error {
+  const copy = new Error();
+  Object.setPrototypeOf(copy, Object.getPrototypeOf(error));
+  for (const key of Reflect.ownKeys(error)) {
+    if (key !== "stack") {
+      Object.defineProperty(copy, key, Object.getOwnPropertyDescriptor(error, key)!);
+    }
+  }
+  return copy;
+}
+
+/**
+ * Returns the package.json cache that belongs to a resolve cache, so that clearing the
+ * resolve cache or passing a new one also drops package.json reads. Without a resolve
+ * cache (`cache: false`), reads are only shared within one call.
+ */
+function _packageJSONCache(cacheObj: Map<string, unknown> | undefined) {
+  if (!cacheObj) {
+    return new Map<string, PackageConfig>();
+  }
+  let packageJSONCache = packageJSONCaches.get(cacheObj);
+  if (!packageJSONCache) {
+    packageJSONCache = new Map();
+    packageJSONCaches.set(cacheObj, packageJSONCache);
+  }
+  return packageJSONCache;
+}
+
+function _cacheKey(id: string, options?: ResolveOptions, absolute?: boolean) {
   let from: (string | URL)[] | undefined;
   if (Array.isArray(options?.from)) {
     from = options.from;
   } else if (options?.from) {
     from = [options.from];
   }
+  // Without an absolute `from`, the base is the current working directory. Absolute inputs
+  // resolve the same from any base, so they can skip `process.cwd()` and the longer key.
+  const cwd = !absolute && _usesCwd(from) ? [process.cwd()] : undefined;
   return (
     _cacheKeyValues([id]) +
+    _cacheKeyValues(cwd) +
     _conditionsKey(options?.conditions) +
     _cacheKeyValues(options?.extensions) +
     _cacheKeyValues(from) +
     _cacheKeyValues(options?.suffixes) +
     (options?.preserveSymlinks ? "1" : "0")
   );
+}
+
+/**
+ * Whether `_normalizeBases(from)` depends on the current working directory: it does when
+ * `from` is missing or empty, or when one of its paths is relative.
+ */
+function _usesCwd(from: readonly unknown[] | undefined): boolean {
+  let hasBase = false;
+  for (const base of from || []) {
+    if (_isURL(base)) {
+      hasBase = true;
+    } else if (typeof base === "string" && base) {
+      if (!isAbsolute(base) && !/^(?:node|data|http|https|file):/.test(base)) {
+        return true;
+      }
+      hasBase = true;
+    }
+  }
+  return !hasBase;
 }
 
 function _conditionsKey(conditions?: string[]) {

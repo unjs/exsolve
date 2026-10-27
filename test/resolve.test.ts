@@ -1,7 +1,9 @@
-import { existsSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { describe, it, expect, vi } from "vitest";
-import { resolveModuleURL, resolveModulePath } from "../src";
+import { resolveModuleURL, resolveModulePath, createResolver, clearResolveCache } from "../src";
 
 const isWindows = process.platform === "win32";
 
@@ -326,6 +328,203 @@ describe("resolve cache", () => {
         try: true,
       }),
     ).toBeUndefined();
+  });
+
+  it("keeps the query and hash of `file:` inputs", () => {
+    const cache = new Map<string, unknown>();
+    const url = new URL("fixture/hello.mjs", import.meta.url).href;
+    for (const suffix of ["?v=1", "?v=2", "#hash", ""]) {
+      expect(resolveModuleURL(url + suffix, { cache })).toBe(url + suffix);
+    }
+
+    const missing = new URL("fixture/missing.mjs", import.meta.url).href;
+    for (const query of ["?v=1", "?v=2"]) {
+      expect(() => resolveModuleURL(missing + query, { cache })).toThrow(`missing.mjs${query}"`);
+    }
+  });
+
+  it("does not share errors between callers", () => {
+    const cache = new Map<string, unknown>();
+    const catchError = () => {
+      try {
+        resolveModuleURL("missing-shared-error", { cache, from: import.meta.url });
+      } catch (error) {
+        return error as Error & { code?: string };
+      }
+      throw new Error("Expected an error");
+    };
+
+    // Callers may change the errors they catch (Rollup sets its own `code`)
+    const first = catchError();
+    first.code = "PLUGIN_ERROR";
+    first.message = `Could not load: ${first.message}`;
+    const second = catchError();
+    second.code = "PLUGIN_ERROR";
+    second.message = `Could not load: ${second.message}`;
+
+    const third = catchError();
+    expect(third).not.toBe(first);
+    expect(third).not.toBe(second);
+    expect(third.code).toBe("ERR_MODULE_NOT_FOUND");
+    expect(third.message).toMatch(/^Cannot resolve module "missing-shared-error"/);
+    expect(cache.get([...cache.keys()][0]!)).toMatchObject({ code: "ERR_MODULE_NOT_FOUND" });
+  });
+
+  it("keeps the class and own properties of a cached error", () => {
+    class ResolveError extends Error {}
+    const cache = new Map<string, unknown>();
+    const options = { cache, from: import.meta.url };
+    expect(resolveModuleURL("missing-error-properties", { ...options, try: true })).toBeUndefined();
+
+    const cached = [...cache.values()][0] as Error;
+    Object.setPrototypeOf(cached, ResolveError.prototype);
+    Object.assign(cached, { cause: new Error("cause"), url: "file:///missing" });
+
+    let error: unknown;
+    try {
+      resolveModuleURL("missing-error-properties", options);
+    } catch (error_) {
+      error = error_;
+    }
+    expect(error).not.toBe(cached);
+    expect(error).toBeInstanceOf(ResolveError);
+    expect(error).toMatchObject({
+      message: cached.message,
+      code: "ERR_MODULE_NOT_FOUND",
+      cause: cached.cause,
+      url: "file:///missing",
+    });
+  });
+
+  it.skipIf(isWindows)("does not share file system errors between callers", () => {
+    const dir = mkdtempSync(join(tmpdir(), "exsolve-"));
+    try {
+      symlinkSync("loop", join(dir, "loop"));
+      const cache = new Map<string, unknown>();
+      const input = join(dir, "loop", "index.mjs");
+      const errors = [0, 1].map(() => {
+        try {
+          resolveModuleURL(input, { cache });
+        } catch (error) {
+          return error as Error;
+        }
+      });
+
+      expect(errors[1]).not.toBe(errors[0]);
+      for (const error of errors) {
+        expect(error).toMatchObject({ code: "ELOOP", syscall: "lstat", path: input });
+      }
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("separates working directories", () => {
+    const cache = new Map<string, unknown>();
+    const fixture = fileURLToPath(new URL("fixture/", import.meta.url));
+    const cwd = vi.spyOn(process, "cwd");
+    try {
+      for (const from of [undefined, "./", ["./", import.meta.url]]) {
+        cwd.mockReturnValue(fixture);
+        expect(resolveModuleURL("./hello.mjs", { cache, from })).toMatch(/fixture\/hello\.mjs$/);
+        expect(resolveModuleURL("./index.mjs", { cache, from, try: true })).toBeUndefined();
+
+        cwd.mockReturnValue(join(fixture, "foo"));
+        expect(resolveModuleURL("./index.mjs", { cache, from })).toMatch(/foo\/index\.mjs$/);
+        expect(resolveModuleURL("./hello.mjs", { cache, from, try: true })).toBeUndefined();
+      }
+
+      // Absolute `from` and inputs do not depend on the working directory
+      cwd.mockClear();
+      resolveModuleURL("./hello.mjs", { cache, from: new URL("fixture/", import.meta.url) });
+      resolveModuleURL(new URL("fixture/hello.mjs", import.meta.url), { cache });
+      expect(cwd).not.toHaveBeenCalled();
+    } finally {
+      cwd.mockRestore();
+    }
+  });
+});
+
+describe("package.json cache", () => {
+  function setup() {
+    const dir = mkdtempSync(join(tmpdir(), "exsolve-"));
+    mkdirSync(join(dir, "src"));
+    for (const name of ["a", "b"]) {
+      writeFileSync(join(dir, "src", `${name}.mjs`), "");
+    }
+    return {
+      from: pathToFileURL(join(dir, "index.mjs")),
+      setTarget: (name: string) =>
+        writeFileSync(
+          join(dir, "package.json"),
+          JSON.stringify({ imports: { "#target": `./src/${name}.mjs` } }),
+        ),
+      [Symbol.dispose]: () => rmSync(dir, { recursive: true, force: true }),
+    };
+  }
+
+  it("is cleared by `clearResolveCache`", () => {
+    using pkg = setup();
+    pkg.setTarget("a");
+    expect(resolveModuleURL("#target", { from: pkg.from })).toMatch(/a\.mjs$/);
+
+    pkg.setTarget("b");
+    clearResolveCache();
+    expect(resolveModuleURL("#target", { from: pkg.from })).toMatch(/b\.mjs$/);
+  });
+
+  it("is cleared by a resolver's `clearResolveCache`", () => {
+    using pkg = setup();
+    const resolver = createResolver({ cache: new Map(), from: pkg.from });
+    pkg.setTarget("a");
+    expect(resolver.resolveModuleURL("#target", {})).toMatch(/a\.mjs$/);
+
+    pkg.setTarget("b");
+    resolver.clearResolveCache();
+    expect(resolver.resolveModuleURL("#target", {})).toMatch(/b\.mjs$/);
+  });
+
+  it("is not shared between resolve caches", () => {
+    using pkg = setup();
+    pkg.setTarget("a");
+    expect(resolveModuleURL("#target", { from: pkg.from, cache: new Map() })).toMatch(/a\.mjs$/);
+
+    pkg.setTarget("b");
+    expect(resolveModuleURL("#target", { from: pkg.from, cache: new Map() })).toMatch(/b\.mjs$/);
+  });
+
+  it("is cleared after relinking a package with `preserveSymlinks`", () => {
+    using pkg = setup();
+    const store = fileURLToPath(new URL("store/", pkg.from));
+    for (const version of ["1", "2"]) {
+      mkdirSync(join(store, version), { recursive: true });
+      writeFileSync(join(store, version, `v${version}.mjs`), "");
+      writeFileSync(
+        join(store, version, "package.json"),
+        JSON.stringify({ imports: { "#version": `./v${version}.mjs` } }),
+      );
+    }
+    // `pnpm up` relinks `node_modules/pkg` to the new version
+    const link = fileURLToPath(new URL("node_modules/pkg", pkg.from));
+    mkdirSync(join(link, ".."));
+    const options = { from: pathToFileURL(join(link, "index.mjs")), preserveSymlinks: true };
+
+    symlinkSync(join(store, "1"), link, "junction");
+    expect(resolveModuleURL("#version", options)).toMatch(/node_modules\/pkg\/v1\.mjs$/);
+
+    rmSync(link);
+    symlinkSync(join(store, "2"), link, "junction");
+    clearResolveCache();
+    expect(resolveModuleURL("#version", options)).toMatch(/node_modules\/pkg\/v2\.mjs$/);
+  });
+
+  it("is not used with `cache: false`", () => {
+    using pkg = setup();
+    pkg.setTarget("a");
+    expect(resolveModuleURL("#target", { from: pkg.from, cache: false })).toMatch(/a\.mjs$/);
+
+    pkg.setTarget("b");
+    expect(resolveModuleURL("#target", { from: pkg.from, cache: false })).toMatch(/b\.mjs$/);
   });
 });
 

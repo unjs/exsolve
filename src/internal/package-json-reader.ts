@@ -3,7 +3,7 @@
 //
 // Notes:
 // - Removed the native dependency.
-// - No need to cache, we do that in resolve already.
+// - Reads are cached in a map that `resolveModuleURL` swaps per resolve cache (see `setPackageJSONCache`).
 
 import fs from "node:fs";
 import path from "node:path";
@@ -24,7 +24,18 @@ import type { ErrnoException } from "./errors.ts";
 
 const hasOwnProperty = {}.hasOwnProperty;
 
-const cache: Map<string, PackageConfig> = new Map();
+let cache: Map<string, PackageConfig> = new Map();
+
+/**
+ * Sets the cache used by `read` and returns the previous one.
+ */
+export function setPackageJSONCache(
+  newCache: Map<string, PackageConfig>,
+): Map<string, PackageConfig> {
+  const previous = cache;
+  cache = newCache;
+  return previous;
+}
 
 export function read(
   jsonPath: string,
