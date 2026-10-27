@@ -254,8 +254,12 @@ function determineSpecificType(value: unknown): string {
       return `function ${(value as () => void).name}`;
     }
     case "object": {
-      if (value.constructor && value.constructor.name) {
-        return `an instance of ${value.constructor.name}`;
+      // `constructor` may be user-controlled: it need not be an object, and
+      // its `name` need not be a non-empty string. Reading either can invoke
+      // an accessor, so read each one once.
+      const name: unknown = value.constructor?.name;
+      if (typeof name === "string" && name !== "") {
+        return `an instance of ${name}`;
       }
       return `${inspect(value, { depth: -1 })}`;
     }

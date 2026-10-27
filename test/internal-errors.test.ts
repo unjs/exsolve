@@ -100,3 +100,52 @@ describe("determineSpecificType via ERR_INVALID_ARG_TYPE 'Received' tail", () =>
     });
   }
 });
+
+describe("determineSpecificType with user-controlled constructor", () => {
+  const received = (value: unknown) =>
+    new ERR_INVALID_ARG_TYPE("x", "string", value).message.split(". Received ")[1];
+
+  it("describes a named class instance", () => {
+    class Foo {}
+    expect(received(new Foo())).toBe("an instance of Foo");
+  });
+
+  it("inspects an anonymous class instance", () => {
+    expect(received(new (class {})())).toBe("{}");
+  });
+
+  it("inspects when constructor is a primitive", () => {
+    expect(received(JSON.parse('{"constructor": 5}'))).toBe("[Object]");
+  });
+
+  it("inspects when constructor.name is empty", () => {
+    expect(received({ constructor: { name: "" } })).toBe("[Object]");
+  });
+
+  it("inspects when constructor.name is a symbol", () => {
+    expect(received({ constructor: { name: Symbol("x") } })).toBe("[Object]");
+  });
+
+  it("inspects when constructor.name is not a string", () => {
+    expect(received({ constructor: { name: 42 } })).toBe("[Object]");
+  });
+
+  it("reads constructor and name once each", () => {
+    let constructorReads = 0;
+    let nameReads = 0;
+    const named = {
+      get constructor() {
+        constructorReads++;
+        return {
+          get name() {
+            nameReads++;
+            return "Foo";
+          },
+        };
+      },
+    };
+    expect(received(named)).toBe("an instance of Foo");
+    expect(constructorReads).toBe(1);
+    expect(nameReads).toBe(1);
+  });
+});
