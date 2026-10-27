@@ -1,4 +1,4 @@
-import { lstatSync, statSync } from "node:fs";
+import { realpathSync, statSync } from "node:fs";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { isAbsolute } from "node:path";
 import { moduleResolve } from "./internal/resolve.ts";
@@ -95,14 +95,14 @@ export function resolveModuleURL<O extends ResolveOptions>(
   }
 
   const specifier = (parsedInput as { specifier: string }).specifier;
-  const url = (parsedInput as { url: URL }).url;
+  let url = (parsedInput as { url: URL }).url;
   const absolutePath = (parsedInput as { absolutePath: string }).absolutePath;
 
   // Check for cache
   let cacheKey: string | undefined;
   let cacheObj: Map<string, unknown> | undefined;
   if (options?.cache !== false) {
-    cacheKey = _cacheKey(specifier || url.href, options, !specifier);
+    cacheKey = _cacheKey(absolutePath ? url.href : specifier, options, !!absolutePath);
     cacheObj = options?.cache && typeof options?.cache === "object" ? options.cache : globalCache;
   }
 
@@ -122,10 +122,17 @@ export function resolveModuleURL<O extends ResolveOptions>(
   // Absolute path to file (fast path)
   if (absolutePath) {
     try {
-      // Unless preserved, symlinks fall through to `finalizeResolution`, which resolves the real path
-      const stat = options?.preserveSymlinks ? statSync(absolutePath) : lstatSync(absolutePath);
+      const stat = statSync(absolutePath);
 
       if (stat.isFile()) {
+        // Resolve symlinks in any segment (not only the last one), like `finalizeResolution`
+        const realPath = options?.preserveSymlinks ? absolutePath : realpathSync(absolutePath);
+        if (realPath !== absolutePath) {
+          const { search, hash } = url;
+          url = pathToFileURL(realPath);
+          url.search = search;
+          url.hash = hash;
+        }
         if (cacheObj) {
           cacheObj.set(cacheKey!, url.href);
         }
@@ -136,6 +143,9 @@ export function resolveModuleURL<O extends ResolveOptions>(
         if (cacheObj) {
           _cacheError(cacheObj, cacheKey!, error);
         }
+        if (options?.try) {
+          return undefined as any;
+        }
         throw error;
       }
     }
@@ -145,8 +155,9 @@ export function resolveModuleURL<O extends ResolveOptions>(
   const conditionsSet = options?.conditions ? new Set(options.conditions) : DEFAULT_CONDITIONS_SET;
 
   // Search through bases
-  const target = specifier || url.href;
-  const bases: URL[] = _normalizeBases(options?.from);
+  const target = absolutePath ? url.href : specifier;
+  // Absolute inputs don't depend on the base, so probe them once
+  const bases: URL[] = absolutePath ? [url] : _normalizeBases(options?.from);
   const suffixes = options?.suffixes || [""];
   const extensions = options?.extensions ? ["", ...options.extensions] : [""];
   let resolved: URL | undefined;
@@ -181,8 +192,9 @@ export function resolveModuleURL<O extends ResolveOptions>(
 
   // Throw error if not found
   if (!resolved) {
+    const from = absolutePath ? _normalizeBases(options?.from) : bases;
     const error = new Error(
-      `Cannot resolve module "${input}" (from: ${bases.map((u) => _fmtPath(u)).join(", ")})`,
+      `Cannot resolve module "${input}" (from: ${from.map((u) => _fmtPath(u)).join(", ")})`,
     );
     // @ts-ignore
     error.code = "ERR_MODULE_NOT_FOUND";
@@ -454,7 +466,9 @@ function _parseInput(
     }
 
     if (isAbsolute(input)) {
-      return { url: pathToFileURL(input), absolutePath: input };
+      // Check the same (normalized) path that is returned
+      const url = pathToFileURL(input);
+      return { url, absolutePath: fileURLToPath(url) };
     }
 
     if (/^(?:node|data|http|https):/.test(input)) {
