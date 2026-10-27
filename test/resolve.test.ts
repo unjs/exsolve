@@ -518,6 +518,33 @@ describe("package.json cache", () => {
     expect(resolveModuleURL("#version", options)).toMatch(/node_modules\/pkg\/v2\.mjs$/);
   });
 
+  it("is cleared with a directly cleared resolve cache", () => {
+    using pkg = setup();
+    const cache = new Map<string, unknown>();
+    pkg.setTarget("a");
+    expect(resolveModuleURL("#target", { from: pkg.from, cache })).toMatch(/a\.mjs$/);
+
+    pkg.setTarget("b");
+    cache.clear();
+    // Resolves without package.json first, so `cache` is not empty
+    resolveModuleURL(new URL("fixture/hello.mjs", import.meta.url), { cache });
+    expect(resolveModuleURL("#target", { from: pkg.from, cache })).toMatch(/b\.mjs$/);
+  });
+
+  it("is cleared by `clearResolveCache` of another exsolve copy", async () => {
+    using pkg = setup();
+    vi.resetModules();
+    const copy: typeof import("../src") = await import("../src");
+    expect(copy.resolveModuleURL).not.toBe(resolveModuleURL);
+
+    pkg.setTarget("a");
+    expect(resolveModuleURL("#target", { from: pkg.from })).toMatch(/a\.mjs$/);
+
+    pkg.setTarget("b");
+    copy.clearResolveCache();
+    expect(resolveModuleURL("#target", { from: pkg.from })).toMatch(/b\.mjs$/);
+  });
+
   it("is not used with `cache: false`", () => {
     using pkg = setup();
     pkg.setTarget("a");
@@ -543,6 +570,22 @@ describe.runIf(isWindows)("windows", () => {
       const DRIVE_LETTER_RE = /^\w(?=:)/;
       const resolvedDriveLetter = resolved.match(DRIVE_LETTER_RE)![0];
       expect(resolvedDriveLetter).toBe(resolvedDriveLetter.toUpperCase());
+    }
+  });
+
+  it("separates drives of a `from` path without one", () => {
+    const cache = new Map<string, unknown>();
+    const fixture = fileURLToPath(new URL("fixture/", import.meta.url)).replace(/\\/g, "/");
+    // `/path/to/fixture/` takes the drive of the working directory
+    const from = fixture.replace(/^[a-z]:/i, "");
+    const otherDrive = /^z:/i.test(fixture) ? "Y:\\" : "Z:\\";
+    expect(resolveModuleURL("./hello.mjs", { cache, from })).toMatch(/fixture\/hello\.mjs$/);
+
+    const cwd = vi.spyOn(process, "cwd").mockReturnValue(otherDrive);
+    try {
+      expect(resolveModuleURL("./hello.mjs", { cache, from, try: true })).toBeUndefined();
+    } finally {
+      cwd.mockRestore();
     }
   });
 });

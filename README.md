@@ -67,7 +67,7 @@ const { resolveModuleURL, resolveModulePath } = createResolver({
 
 To speed up resolution, resolved values (and errors) are globally cached with a unique key based on id and options (and the current working directory, when `from` is missing or relative). Each cache hit for an error throws a new copy.
 
-Parsed `package.json` files are cached along with the resolve cache that read them: clearing it with `clearResolveCache()` (or a resolver's `clearResolveCache()`) or passing a new cache object also reads them again, and with `cache: false` they are only reused within a single call.
+Parsed `package.json` files are cached along with the resolve cache that read them: clearing it (with `clearResolveCache()`, a resolver's `clearResolveCache()` or `cache.clear()`) or passing a new cache object also reads them again, and with `cache: false` they are only reused within a single call.
 
 **Example:** Invalidate all (global) cache entries (to support file-system changes).
 
