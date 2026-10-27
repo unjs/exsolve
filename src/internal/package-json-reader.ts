@@ -54,8 +54,19 @@ export function read(
   } catch (error) {
     const exception = error as ErrnoException;
 
-    if (exception.code !== "ENOENT" && exception?.code !== "ENOTDIR") {
-      throw exception;
+    // Missing (or not a file) means no package config, other read errors are reported
+    if (
+      exception.code !== "ENOENT" &&
+      exception.code !== "ENOTDIR" &&
+      exception.code !== "EISDIR"
+    ) {
+      const error = new ERR_INVALID_PACKAGE_CONFIG(
+        jsonPath,
+        (base ? `"${specifier}" from ` : "") + fileURLToPath(base || specifier),
+        `Cannot read package config: ${exception.message}`,
+      );
+      error.cause = exception;
+      throw error;
     }
   }
 
