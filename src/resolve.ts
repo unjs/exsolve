@@ -15,10 +15,10 @@ const globalCache = /* #__PURE__ */ (() =>
   // eslint-disable-next-line unicorn/no-unreadable-iife
   ((globalThis as any)["__EXSOLVE_CACHE__"] ||= new Map()))() as Map<string, unknown>;
 
-// package.json reads, kept for as long as the resolve cache they were made for
+// package.json reads, kept for as long as the resolve cache they were made for (see `_packageJSONCache`)
 const packageJSONCaches = /* #__PURE__ */ new WeakMap<
   Map<string, unknown>,
-  Map<string, PackageConfig>
+  { key: string; packages: Map<string, PackageConfig> }
 >();
 
 /**
@@ -151,7 +151,7 @@ export function resolveModuleURL<O extends ResolveOptions>(
   const extensions = options?.extensions ? ["", ...options.extensions] : [""];
   let resolved: URL | undefined;
   // `_tryModuleResolve` does not throw, so the previous cache is always restored
-  const previousPackageJSONCache = setPackageJSONCache(_packageJSONCache(cacheObj));
+  const previousPackageJSONCache = setPackageJSONCache(_packageJSONCache(cacheObj, cacheKey!));
   for (const base of bases) {
     for (const suffix of suffixes) {
       let name = _join(target, suffix);
@@ -356,17 +356,22 @@ function _copyError(error: Error): Error {
  * Returns the package.json cache that belongs to a resolve cache, so that clearing the
  * resolve cache or passing a new one also drops package.json reads. Without a resolve
  * cache (`cache: false`), reads are only shared within one call.
+ *
+ * The resolve cache can also be cleared without `clearResolveCache()` (`cache.clear()`, or
+ * another copy of exsolve sharing the global cache). Every resolve that reads package.json
+ * caches its result under `key`, so a package.json cache starts over once the entry of the
+ * resolve that created it is gone.
  */
-function _packageJSONCache(cacheObj: Map<string, unknown> | undefined) {
+function _packageJSONCache(cacheObj: Map<string, unknown> | undefined, key: string) {
   if (!cacheObj) {
     return new Map<string, PackageConfig>();
   }
   let packageJSONCache = packageJSONCaches.get(cacheObj);
-  if (!packageJSONCache) {
-    packageJSONCache = new Map();
+  if (!packageJSONCache || !cacheObj.has(packageJSONCache.key)) {
+    packageJSONCache = { key, packages: new Map() };
     packageJSONCaches.set(cacheObj, packageJSONCache);
   }
-  return packageJSONCache;
+  return packageJSONCache.packages;
 }
 
 function _cacheKey(id: string, options?: ResolveOptions, absolute?: boolean) {
@@ -392,7 +397,8 @@ function _cacheKey(id: string, options?: ResolveOptions, absolute?: boolean) {
 
 /**
  * Whether `_normalizeBases(from)` depends on the current working directory: it does when
- * `from` is missing or empty, or when one of its paths is relative.
+ * `from` is missing or empty, or when one of its paths is relative. On Windows, a path
+ * rooted without a drive (`/src`) takes the drive of the working directory.
  */
 function _usesCwd(from: readonly unknown[] | undefined): boolean {
   let hasBase = false;
@@ -400,7 +406,8 @@ function _usesCwd(from: readonly unknown[] | undefined): boolean {
     if (_isURL(base)) {
       hasBase = true;
     } else if (typeof base === "string" && base) {
-      if (!isAbsolute(base) && !/^(?:node|data|http|https|file):/.test(base)) {
+      const absolute = isWindows ? /^(?:[a-z]:[/\\]|[/\\]{2})/i.test(base) : isAbsolute(base);
+      if (!absolute && !/^(?:node|data|http|https|file):/.test(base)) {
         return true;
       }
       hasBase = true;
