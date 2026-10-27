@@ -114,6 +114,86 @@ describe("resolveModuleURL", () => {
     expect(resolved5).match(/fixture\/hello\.link\.mjs\?v=1#h$/);
   });
 
+  it("follows symlinked parent directories of absolute paths", () => {
+    const fixture = new URL("fixture/", import.meta.url);
+    const linked = fileURLToPath(new URL("links/foo/index.mjs", fixture));
+
+    const resolved = resolveModuleURL(linked);
+    expect(fileURLToPath(resolved)).match(/fixture[/\\]foo[/\\]index\.mjs$/);
+    expect(resolved).toBe(resolveModuleURL("./links/foo/index.mjs", { from: fixture }));
+
+    // Keeps search and hash
+    expect(resolveModuleURL(pathToFileURL(linked).href + "?x=1#y")).toBe(resolved + "?x=1#y");
+
+    // Preserved symlinks keep the linked path
+    const preserved = resolveModuleURL(linked, { preserveSymlinks: true });
+    expect(preserved).toBe(pathToFileURL(linked).href);
+    expect(preserved).toBe(
+      resolveModuleURL("./links/foo/index.mjs", { from: fixture, preserveSymlinks: true }),
+    );
+  });
+
+  it("appends suffixes and extensions before search and hash of absolute URLs", () => {
+    const fixture = new URL("fixture/", import.meta.url);
+    const options = { extensions: [".mjs"], suffixes: ["", "/index"], cache: false };
+    expect(resolveModuleURL(new URL("hello?x=1#y", fixture).href, options)).match(
+      /fixture\/hello\.mjs\?x=1#y$/,
+    );
+    expect(resolveModuleURL(new URL("foo?x=1", fixture).href, options)).match(
+      /fixture\/foo\/index\.mjs\?x=1$/,
+    );
+  });
+
+  it("does not resolve absolute file paths with a trailing slash", () => {
+    const input = fileURLToPath(new URL("fixture/hello.mjs", import.meta.url)) + "/";
+    for (const preserveSymlinks of [false, true]) {
+      for (const id of [input, pathToFileURL(input)]) {
+        expect(resolveModuleURL(id, { preserveSymlinks, try: true })).toBeUndefined();
+      }
+    }
+  });
+
+  it("does not apply `..` to the symlink target of absolute paths", () => {
+    // `links/foo/../hello.mjs` exists through the symlink but not as written
+    const input = fileURLToPath(new URL("fixture/links/foo", import.meta.url)) + "/../hello.mjs";
+    for (const preserveSymlinks of [false, true]) {
+      expect(resolveModuleURL(input, { preserveSymlinks, try: true })).toBeUndefined();
+    }
+  });
+
+  it("returns undefined with `try` for absolute path errors", () => {
+    // ENAMETOOLONG (not ENOENT)
+    const input = join(fileURLToPath(new URL("fixture/", import.meta.url)), "x".repeat(300));
+    for (const preserveSymlinks of [false, true]) {
+      const cache = new Map<string, unknown>();
+      expect(resolveModuleURL(input, { cache, preserveSymlinks, try: true })).toBeUndefined();
+      expect(resolveModuleURL(input, { cache, preserveSymlinks, try: true })).toBeUndefined();
+      expect(() => resolveModuleURL(input, { cache, preserveSymlinks })).toThrow();
+    }
+  });
+
+  it.skipIf(isWindows)("returns undefined with `try` for symlink loops", () => {
+    const dir = mkdtempSync(join(tmpdir(), "exsolve-"));
+    try {
+      const input = join(dir, "loop.mjs");
+      symlinkSync("loop.mjs", input);
+      for (const preserveSymlinks of [false, true]) {
+        const cache = new Map<string, unknown>();
+        expect(resolveModuleURL(input, { cache, preserveSymlinks, try: true })).toBeUndefined();
+        expect(resolveModuleURL(input, { cache, preserveSymlinks, try: true })).toBeUndefined();
+      }
+    } finally {
+      rmSync(dir, { recursive: true });
+    }
+  });
+
+  it("does not resolve empty input", () => {
+    expect(resolveModuleURL("", { try: true })).toBeUndefined();
+    expect(() => resolveModuleURL("")).toThrow(
+      expect.objectContaining({ code: "ERR_MODULE_NOT_FOUND" }),
+    );
+  });
+
   it("resolves node built-ints", () => {
     expect(resolveModuleURL("node:fs")).toBe("node:fs");
     expect(resolveModuleURL("fs")).toBe("node:fs");
@@ -412,7 +492,7 @@ describe("resolve cache", () => {
 
       expect(errors[1]).not.toBe(errors[0]);
       for (const error of errors) {
-        expect(error).toMatchObject({ code: "ELOOP", syscall: "lstat", path: input });
+        expect(error).toMatchObject({ code: "ELOOP", syscall: "stat", path: input });
       }
     } finally {
       rmSync(dir, { recursive: true, force: true });
@@ -556,6 +636,15 @@ describe("package.json cache", () => {
 });
 
 describe.runIf(isWindows)("windows", () => {
+  it("resolves long path (`\\\\?\\`) inputs", () => {
+    const input = "\\\\?\\" + fileURLToPath(new URL("fixture/hello.mjs", import.meta.url));
+    for (const preserveSymlinks of [false, true]) {
+      expect(resolveModuleURL(input, { preserveSymlinks, cache: false })).match(
+        /^file:\/\/\/\w:\/.*\/fixture\/hello\.mjs$/,
+      );
+    }
+  });
+
   it("normalizes drive letter and slashes", () => {
     for (const input of [
       "./fixture/hello.mjs",
