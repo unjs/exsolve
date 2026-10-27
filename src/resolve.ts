@@ -1,6 +1,6 @@
 import { realpathSync, statSync } from "node:fs";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import { isAbsolute } from "node:path";
+import { isAbsolute, resolve, sep } from "node:path";
 import { moduleResolve } from "./internal/resolve.ts";
 import { setPackageJSONCache } from "./internal/package-json-reader.ts";
 import type { PackageConfig } from "./internal/package-json-reader.ts";
@@ -98,11 +98,11 @@ export function resolveModuleURL<O extends ResolveOptions>(
   let url = (parsedInput as { url: URL }).url;
   const absolutePath = (parsedInput as { absolutePath: string }).absolutePath;
 
-  // Check for cache
+  // Check for cache (absolute path strings are keyed on the path, and get a URL on a miss)
   let cacheKey: string | undefined;
   let cacheObj: Map<string, unknown> | undefined;
   if (options?.cache !== false) {
-    cacheKey = _cacheKey(absolutePath ? url.href : specifier, options, !!absolutePath);
+    cacheKey = _cacheKey(url ? url.href : absolutePath || specifier, options, !!absolutePath);
     cacheObj = options?.cache && typeof options?.cache === "object" ? options.cache : globalCache;
   }
 
@@ -121,6 +121,7 @@ export function resolveModuleURL<O extends ResolveOptions>(
 
   // Absolute path to file (fast path)
   if (absolutePath) {
+    url ||= pathToFileURL(absolutePath);
     try {
       const stat = statSync(absolutePath);
 
@@ -469,9 +470,22 @@ function _isURL(input: unknown): input is URL {
   return input instanceof URL || input?.constructor?.name === "URL"; /* #25 */
 }
 
+/**
+ * Normalizes an absolute path like `pathToFileURL` does (resolving `.` and `..` segments and
+ * keeping a trailing separator), so the path that is checked is the one that is returned.
+ */
+function _normalizeAbsolutePath(input: string): string {
+  const path = resolve(input);
+  const last = input.at(-1);
+  if ((last === "/" || (isWindows && last === "\\")) && !path.endsWith(sep)) {
+    return path + sep;
+  }
+  return path;
+}
+
 function _parseInput(
   input: string | URL,
-): { url: URL; absolutePath: string } | { external: string } | { specifier: string } {
+): { url?: URL; absolutePath: string } | { external: string } | { specifier: string } {
   if (typeof input === "string") {
     if (input.startsWith("file:")) {
       const url = new URL(input);
@@ -479,9 +493,7 @@ function _parseInput(
     }
 
     if (isAbsolute(input)) {
-      // Check the same (normalized) path that is returned
-      const url = pathToFileURL(input);
-      return { url, absolutePath: fileURLToPath(url) };
+      return { absolutePath: _normalizeAbsolutePath(input) };
     }
 
     if (/^(?:node|data|http|https):/.test(input)) {
