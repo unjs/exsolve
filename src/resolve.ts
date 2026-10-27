@@ -1,4 +1,4 @@
-import { lstatSync, realpathSync, statSync } from "node:fs";
+import { lstatSync, statSync } from "node:fs";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { isAbsolute } from "node:path";
 import { moduleResolve } from "./internal/resolve.ts";
@@ -56,6 +56,11 @@ export type ResolveOptions = {
    * the resolver returns `undefined` instead of throwing an error.
    */
   try?: boolean;
+
+  /**
+   * If set to `true`, symlinks are not resolved to their real path during resolution.
+   */
+  preserveSymlinks?: boolean;
 };
 
 export type ResolverOptions = Omit<ResolveOptions, "try">;
@@ -82,8 +87,8 @@ export function resolveModuleURL<O extends ResolveOptions>(
   }
 
   const specifier = (parsedInput as { specifier: string }).specifier;
-  let url = (parsedInput as { url: URL }).url;
-  let absolutePath = (parsedInput as { absolutePath: string }).absolutePath;
+  const url = (parsedInput as { url: URL }).url;
+  const absolutePath = (parsedInput as { absolutePath: string }).absolutePath;
 
   // Check for cache
   let cacheKey: string | undefined;
@@ -109,12 +114,8 @@ export function resolveModuleURL<O extends ResolveOptions>(
   // Absolute path to file (fast path)
   if (absolutePath) {
     try {
-      const stat = lstatSync(absolutePath);
-
-      if (stat.isSymbolicLink()) {
-        absolutePath = realpathSync(absolutePath);
-        url = pathToFileURL(absolutePath);
-      }
+      // Unless preserved, symlinks fall through to `finalizeResolution`, which resolves the real path
+      const stat = options?.preserveSymlinks ? statSync(absolutePath) : lstatSync(absolutePath);
 
       if (stat.isFile()) {
         if (cacheObj) {
@@ -148,7 +149,12 @@ export function resolveModuleURL<O extends ResolveOptions>(
         name += "/.";
       }
       for (const extension of extensions) {
-        resolved = _tryModuleResolve(name + extension, base, conditionsSet);
+        resolved = _tryModuleResolve(
+          name + extension,
+          base,
+          conditionsSet,
+          options?.preserveSymlinks,
+        );
         if (resolved) {
           break;
         }
@@ -246,9 +252,14 @@ export function clearResolveCache() {
 
 // --- Internal ---
 
-function _tryModuleResolve(specifier: string, base: URL, conditions: any): URL | undefined {
+function _tryModuleResolve(
+  specifier: string,
+  base: URL,
+  conditions: any,
+  preserveSymlinks?: boolean,
+): URL | undefined {
   try {
-    return moduleResolve(specifier, base, conditions);
+    return moduleResolve(specifier, base, conditions, preserveSymlinks);
   } catch {
     // ignore
   }
@@ -321,7 +332,8 @@ function _cacheKey(id: string, options?: ResolveOptions) {
     _conditionsKey(options?.conditions) +
     _cacheKeyValues(options?.extensions) +
     _cacheKeyValues(from) +
-    _cacheKeyValues(options?.suffixes)
+    _cacheKeyValues(options?.suffixes) +
+    (options?.preserveSymlinks ? "1" : "0")
   );
 }
 

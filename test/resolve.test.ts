@@ -1,5 +1,4 @@
 import { existsSync } from "node:fs";
-import { resolve as nodeResolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { describe, it, expect, vi } from "vitest";
 import { resolveModuleURL, resolveModulePath } from "../src";
@@ -73,9 +72,44 @@ describe("resolveModuleURL", () => {
     });
     expect(fileURLToPath(resolved2)).match(/fixture[/\\]test.txt$/);
 
-    const absolutePath = nodeResolve(process.cwd(), "./test/fixture/hello.link.mjs");
+    const absolutePath = fileURLToPath(new URL("fixture/hello.link.mjs", import.meta.url));
     const resolved3 = resolveModuleURL(absolutePath);
     expect(fileURLToPath(resolved3)).match(/fixture[/\\]hello\.mjs$/);
+
+    // Keeps query and hash of absolute symlink inputs
+    const resolved4 = resolveModuleURL(pathToFileURL(absolutePath).href + "?v=1#h", {
+      suffixes: ["", "/index"],
+    });
+    expect(resolved4).match(/fixture\/hello\.mjs\?v=1#h$/);
+  });
+
+  it("preserves symlinks with preserveSymlinks: true", () => {
+    const resolved = resolveModuleURL("./fixture/hello.link.mjs", {
+      from: import.meta.url,
+      preserveSymlinks: true,
+    });
+    expect(fileURLToPath(resolved)).match(/fixture[/\\]hello\.link\.mjs$/);
+
+    const resolved2 = resolveModuleURL("./fixture/test.link.txt", {
+      from: import.meta.url,
+      preserveSymlinks: true,
+    });
+    expect(fileURLToPath(resolved2)).match(/fixture[/\\]test\.link\.txt$/);
+
+    const absolutePath = fileURLToPath(new URL("fixture/hello.link.mjs", import.meta.url));
+    const resolved3 = resolveModuleURL(absolutePath, { preserveSymlinks: true });
+    expect(fileURLToPath(resolved3)).match(/fixture[/\\]hello\.link\.mjs$/);
+
+    // Cache must not leak between preserveSymlinks modes
+    const resolved4 = resolveModuleURL(absolutePath);
+    expect(fileURLToPath(resolved4)).match(/fixture[/\\]hello\.mjs$/);
+
+    // Absolute symlink inputs resolve as-is (no suffix or extension probing)
+    const resolved5 = resolveModuleURL(pathToFileURL(absolutePath).href + "?v=1#h", {
+      preserveSymlinks: true,
+      suffixes: ["/index", ""],
+    });
+    expect(resolved5).match(/fixture\/hello\.link\.mjs\?v=1#h$/);
   });
 
   it("resolves node built-ints", () => {

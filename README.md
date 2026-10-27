@@ -169,6 +169,17 @@ const src = resolveModulePath("./src/utils", {
 > [!TIP]
 > For better performance, use explicit `/index` when needed and avoid this option.
 
+### `preserveSymlinks`
+
+If set to `true`, symlinks are not resolved to their real path (similar to Node.js [`--preserve-symlinks`](https://nodejs.org/api/cli.html#--preserve-symlinks)).
+
+**Example:**
+
+```ts
+// file:///path/to/link.mjs (instead of the symlink target)
+const resolved = resolveModuleURL("./link.mjs", { from: import.meta.url, preserveSymlinks: true });
+```
+
 ### `cache`
 
 Resolve cache (enabled by default with a shared global object).
