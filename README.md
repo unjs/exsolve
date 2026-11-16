@@ -63,6 +63,29 @@ const { resolveModuleURL, resolveModulePath } = createResolver({
 });
 ```
 
+## Resolve Errors
+
+When all resolution attempts fail, `exsolve` throws `ERR_MODULE_NOT_FOUND`. The error may also include:
+
+- `resolveCode`: the underlying Node.js error code, included only when every attempt fails with the same code.
+- `resolveReason`: included only when every attempt fails for the same recognized reason:
+  - `unmatched-conditions`: an `exports` entry matches, but no target matches the active conditions.
+  - `blocked`: the export map resolves to `null` (including an empty array).
+  - `not-exported`: no `exports` entry matches the subpath.
+  - `missing-target`: the selected file does not exist.
+
+```ts
+import { resolveModuleURL, type ResolveError } from "exsolve";
+
+try {
+  resolveModuleURL("pkg/feature", { from: import.meta.url });
+} catch (error) {
+  if ((error as ResolveError).resolveReason === "unmatched-conditions") {
+    // `pkg/feature` is exported, but not for the active conditions.
+  }
+}
+```
+
 ## Resolve Cache
 
 To speed up resolution, resolved values (and errors) are globally cached with a unique key based on id and options (and the current working directory, when `from` is missing or relative). Each cache hit for an error throws a new copy.

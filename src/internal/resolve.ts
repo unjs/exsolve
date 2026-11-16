@@ -237,11 +237,19 @@ function importNotDefined(specifier: string, packageJsonUrl: URL | undefined, ba
   );
 }
 
-function exportsNotFound(subpath: string, packageJsonUrl: URL, base: URL): Error {
-  return new ERR_PACKAGE_PATH_NOT_EXPORTED(
-    fileURLToPath(new URL(".", packageJsonUrl)),
-    subpath,
-    base && fileURLToPath(base),
+function exportsNotFound(
+  subpath: string,
+  packageJsonUrl: URL,
+  base: URL,
+  resolveReason: "blocked" | "unmatched-conditions" | "not-exported",
+): Error {
+  return Object.assign(
+    new ERR_PACKAGE_PATH_NOT_EXPORTED(
+      fileURLToPath(new URL(".", packageJsonUrl)),
+      subpath,
+      base && fileURLToPath(base),
+    ),
+    { resolveReason },
   );
 }
 
@@ -576,7 +584,12 @@ function packageExportsResolve(
       conditions,
     );
     if (resolveResult === null || resolveResult === undefined) {
-      throw exportsNotFound(packageSubpath, packageJsonUrl, base);
+      throw exportsNotFound(
+        packageSubpath,
+        packageJsonUrl,
+        base,
+        resolveResult === null ? "blocked" : "unmatched-conditions",
+      );
     }
 
     return resolveResult;
@@ -635,13 +648,18 @@ function packageExportsResolve(
     );
 
     if (resolveResult === null || resolveResult === undefined) {
-      throw exportsNotFound(packageSubpath, packageJsonUrl, base);
+      throw exportsNotFound(
+        packageSubpath,
+        packageJsonUrl,
+        base,
+        resolveResult === null ? "blocked" : "unmatched-conditions",
+      );
     }
 
     return resolveResult;
   }
 
-  throw exportsNotFound(packageSubpath, packageJsonUrl, base);
+  throw exportsNotFound(packageSubpath, packageJsonUrl, base, "not-exported");
 }
 
 function patternKeyCompare(a: string, b: string) {

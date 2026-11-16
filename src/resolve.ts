@@ -73,6 +73,17 @@ export type ResolveOptions = {
 
 export type ResolverOptions = Omit<ResolveOptions, "try">;
 
+export type ResolveError = Error & {
+  /** The reported error code, typically `ERR_MODULE_NOT_FOUND`. */
+  code?: string;
+
+  /** The underlying Node.js error code, when all failed resolution attempts agree. */
+  resolveCode?: string;
+
+  /** The reason for failure, when all attempts share the same recognized reason. */
+  resolveReason?: "unmatched-conditions" | "blocked" | "not-exported" | "missing-target";
+};
+
 type ResolveRes<Opts extends ResolveOptions> = Opts["try"] extends true
   ? string | undefined
   : string;
@@ -170,7 +181,9 @@ export function resolveModuleURL<O extends ResolveOptions>(
   const suffixes = options?.suffixes || [""];
   const extensions = options?.extensions ? ["", ...options.extensions] : [""];
   let resolved: URL | undefined;
-  // `_tryModuleResolve` does not throw, so the previous cache is always restored
+  // Later failures must not erase an earlier disagreement between attempts.
+  let failureCode: string | null | undefined;
+  let failureReason: ResolveError["resolveReason"] | null | undefined;
   const previousPackageJSONCache = setPackageJSONCache(_packageJSONCache(cacheObj, cacheKey!));
   for (const base of bases) {
     for (const suffix of suffixes) {
@@ -179,14 +192,22 @@ export function resolveModuleURL<O extends ResolveOptions>(
         name += "/.";
       }
       for (const extension of extensions) {
-        resolved = _tryModuleResolve(
-          name + extension,
-          base,
-          conditionsSet,
-          options?.preserveSymlinks,
-        );
-        if (resolved) {
+        try {
+          resolved = moduleResolve(
+            name + extension,
+            base,
+            conditionsSet,
+            options?.preserveSymlinks,
+          );
           break;
+        } catch (error: any) {
+          const code = typeof error?.code === "string" ? error.code : null;
+          const reason =
+            code === "ERR_MODULE_NOT_FOUND" && typeof error.url === "string"
+              ? "missing-target"
+              : (error?.resolveReason ?? null);
+          failureCode = failureCode === undefined || failureCode === code ? code : null;
+          failureReason = failureReason === undefined || failureReason === reason ? reason : null;
         }
       }
       if (resolved) {
@@ -202,11 +223,25 @@ export function resolveModuleURL<O extends ResolveOptions>(
   // Throw error if not found
   if (!resolved) {
     const from = absolutePath ? _normalizeBases(options?.from) : bases;
-    const error = new Error(
+    const error: ResolveError = new Error(
       `Cannot resolve module "${input}" (from: ${from.map((u) => _fmtPath(u)).join(", ")})`,
     );
-    // @ts-ignore
     error.code = "ERR_MODULE_NOT_FOUND";
+    if (failureCode) {
+      // Keep diagnostics non-enumerable to preserve existing error formatting and comparisons.
+      Object.defineProperty(error, "resolveCode", {
+        value: failureCode,
+        writable: true,
+        configurable: true,
+      });
+      if (failureReason) {
+        Object.defineProperty(error, "resolveReason", {
+          value: failureReason,
+          writable: true,
+          configurable: true,
+        });
+      }
+    }
 
     if (cacheObj) {
       _cacheError(cacheObj, cacheKey!, error);
@@ -290,19 +325,6 @@ export function clearResolveCache() {
 }
 
 // --- Internal ---
-
-function _tryModuleResolve(
-  specifier: string,
-  base: URL,
-  conditions: any,
-  preserveSymlinks?: boolean,
-): URL | undefined {
-  try {
-    return moduleResolve(specifier, base, conditions, preserveSymlinks);
-  } catch {
-    // ignore
-  }
-}
 
 function _normalizeBases(inputs: unknown): URL[] {
   const urls = (Array.isArray(inputs) ? inputs : [inputs]).flatMap((input) =>
