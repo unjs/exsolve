@@ -1,7 +1,7 @@
 import { execFileSync } from "node:child_process";
 import { mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { dirname, join } from "node:path";
+import { dirname, join, relative } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createResolver, resolveModulePath, resolveModuleURL } from "../src";
@@ -203,7 +203,7 @@ describe("resolve error metadata", () => {
 
   it("adds the metadata to errors of resolveModulePath and resolvers", () => {
     const resolver = createResolver({ from, cache: false });
-    expect(resolver.resolveModulePath("@scope/diag/p/a", {})).toBe(join(dir, "a.js"));
+    expect(relative(dir, resolver.resolveModulePath("@scope/diag/p/a", {}))).toBe("a.js");
     expect(outcome("@scope/diag/default-null", {}, resolver.resolveModuleURL)).toEqual(
       failure(NOT_EXPORTED, "blocked"),
     );
